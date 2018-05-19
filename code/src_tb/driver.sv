@@ -82,6 +82,7 @@ class Driver;
             sequencer_to_driver_fifo.get(packet);
             drive_packet(packet);
             $display("I got a packet!!!!");
+						$display(packet.psprint());
         end
 
 				///< VKR exp: simple attente de 100 coups de clock avant de terminer
