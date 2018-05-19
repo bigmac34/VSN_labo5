@@ -1,19 +1,43 @@
+/*-----------------------------------------------------------------------------
+-- HES-SO Master
+-- Haute Ecole Specialisee de Suisse Occidentale
+-------------------------------------------------------------------------------
+-- Cours VSN
+--------------------------------------------------------------------------------
+--
+-- File			: transactions.sv
+-- Authors	: Jérémie Macchi
+--						Vivien Kaltenrieder
+--
+-- Date     : 19.05.2018
+--
+-- Context  : Labo5 VSN
+--
+--------------------------------------------------------------------------------
+-- Description : Implémentation des class pour les transactions, packet Ble et Usb
+--							 Définition des fifos (mailbox)
+--
+--------------------------------------------------------------------------------
+-- Modifications :
+-- Ver   Date        	Person     			Comments
+-- 1.0	 19.05.2018		VKR							Explication sur la structure
+------------------------------------------------------------------------------*/
 `ifndef TRANSACTIONS_SV
 `define TRANSACTIONS_SV
-
-
 
 /******************************************************************************
   Input transaction
 ******************************************************************************/
 class BlePacket;
 
+	///< VKR exp: le 64 c'est 2 puissance 6 (6 bits pour la taille des données)
   logic[(64*8+16+32+8):0] dataToSend;
   int sizeToSend;
 
   /* Champs generes aleatoirement */
   logic isAdv;
   logic dataValid = 1;
+	///< VKR exp: avec le rand c'est ce qui va être randomisé à l'appel de .randomize() sur la class
   rand logic[31:0] addr;
   rand logic[15:0] header;
   rand logic[(64*8):0] rawData;
@@ -26,15 +50,16 @@ class BlePacket;
     (isAdv == 0) -> size inside {[0:63]};
   }
 
-
   function string psprint();
     $sformat(psprint, "BlePacket, isAdv : %b, addr= %h, time = %t\nsizeSend = %d, dataSend = %h\n",
                                                        this.isAdv, this.addr, $time,sizeToSend,dataToSend);
   endfunction : psprint
 
+	///< VKR exp: fonction appellée automatiquement après la randomisation
+	///< VKR exp: en l'occurence construction d'un paquet
   function void post_randomize();
 
-	logic[7:0] preamble=8'h55;
+	logic[7:0] preamble=8'h55;   // 01010101 fixe
 
 	/* Initialisation des données à envoyer */
   	dataToSend = 0;
@@ -81,9 +106,9 @@ class AnalyzerUsbPacket;
 
 endclass : AnalyzerUsbPacket
 
-
+/// VKR exp: pour déclarer une fifo contenant des paquets Ble
 typedef mailbox #(BlePacket) ble_fifo_t;
-
+/// VKR exp: pour déclarer une fifo contenant des paquets Usb
 typedef mailbox #(AnalyzerUsbPacket) usb_fifo_t;
 
 `endif // TRANSACTIONS_SV
