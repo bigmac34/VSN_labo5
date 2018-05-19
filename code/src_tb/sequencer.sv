@@ -9,7 +9,7 @@
 -- Authors	: Jérémie Macchi
 --						Vivien Kaltenrieder
 --
--- Date     : 19.05.2018 
+-- Date     : 19.05.2018
 --
 -- Context  : Labo5 VSN
 --
@@ -53,7 +53,7 @@ class Sequencer;
 				///< VKR exp: envoit d'un packet random encore 9 fois (10 au total)
         for(int i=0;i<9;i++) begin
 
-            packet = new;
+            packet = new;								// Il ne faut pas réutiliser celui qui est dans la mailbox
             packet.isAdv = 0;
             void'(packet.randomize());
 
@@ -61,7 +61,8 @@ class Sequencer;
             sequencer_to_scoreboard_fifo.put(packet);
 
             $display("I sent a packet!!!!");
-        end
+						$display(packet.psprint());
+				end
         $display("Sequencer : end");
     endtask : run
 

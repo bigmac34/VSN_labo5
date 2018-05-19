@@ -51,7 +51,7 @@ class BlePacket;
   }
 
   function string psprint();
-    $sformat(psprint, "BlePacket, isAdv : %b, addr= %h, time = %t\nsizeSend = %d, dataSend = %h\n",
+    $sformat(psprint, "BlePacket\nisAdv : %b\naddr= %h\ntime = %t\nsizeSend = %d\ndataSend = %h\n",
                                                        this.isAdv, this.addr, $time,sizeToSend,dataToSend);
   endfunction : psprint
 
@@ -102,6 +102,7 @@ class BlePacket;
 
 endclass : BlePacket
 
+// A écrire, c'est pour les packets USB
 class AnalyzerUsbPacket;
 
 endclass : AnalyzerUsbPacket
