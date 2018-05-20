@@ -112,7 +112,7 @@ class AnalyzerUsbPacket;
 
 	// Les champs de la variable
 	logic[7:0] size;
-	logic[8:0] rssi;
+	logic[7:0] rssi;
 	logic[6:0] channel;
 	logic	isAdv;
 	logic[31:0] address;

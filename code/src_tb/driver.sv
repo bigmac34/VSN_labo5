@@ -30,6 +30,7 @@
 class Driver;
 		///< VKR exp: pas besoin de setter la valeur, ça vient de l'environment
     int testcase;
+		static logic[6:0] inc = 7'b0000000;
 
 		///< VKR exp: pas besoin d'instancier les fifos, c'est reçu de l'environment
     ble_fifo_t sequencer_to_driver_fifo;
@@ -44,10 +45,11 @@ class Driver;
         vif.valid_i <= 1;
         for(int i = packet.sizeToSend - 1;i>=0; i--) begin
             vif.serial_i <= packet.dataToSend[i];
-            vif.channel_i <= 0;
+            vif.channel_i <= inc;
             vif.rssi_i <= 4;
             @(posedge vif.clk_i);
         end
+				inc = inc + 2;
         vif.serial_i <= 0;
         vif.valid_i <= 0;
         vif.channel_i <= 0;
