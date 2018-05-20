@@ -51,8 +51,8 @@ class BlePacket;
   }
 
   function string psprint();
-    $sformat(psprint, "BlePacket\nisAdv : %b\naddr= %h\ntime = %t\nsizeSend = %d\ndataSend = %h\n",
-                                                       this.isAdv, this.addr, $time,sizeToSend,dataToSend);
+    $sformat(psprint, "BlePacket\nAdvert : %b\nAddress : %h\nSize : %d\nData : %h\n",
+                                                       this.isAdv, this.addr, sizeToSend, dataToSend);
   endfunction : psprint
 
 	///< VKR exp: fonction appellée automatiquement après la randomisation
@@ -85,26 +85,59 @@ class BlePacket;
  		dataToSend[sizeToSend-8+i]=preamble[i];
 	for(int i=0;i<32;i++)
 		dataToSend[sizeToSend-8-32+i]=addr[i];
-    $display("Sending packet with address %h\n",addr);
+  $display("Sending packet with address %h\n",addr);
 	for(int i=0;i<16;i++)
 		dataToSend[sizeToSend-8-32-16+i]=0;
 	for(int i=0;i<6;i++)
 		dataToSend[sizeToSend-8-32-16+i]=size[i];
 	for(int i=0;i<size*8;i++)
 		dataToSend[sizeToSend-8-32-16-1-i]=rawData[size*8-1-i];
-    if (isAdv) begin
-        logic[31:0] ad;
-        for(int i=0; i < 32; i++)
-            ad[i] = dataToSend[sizeToSend-8-32-16-32+i];
-        $display("Advertising with address %h\n",ad);
-    end
+  if (isAdv) begin
+      logic[31:0] ad;
+      for(int i=0; i < 32; i++)
+          ad[i] = dataToSend[sizeToSend-8-32-16-32+i];
+      $display("Advertising with address %h\n",ad);
+  end
   endfunction : post_randomize
 
 endclass : BlePacket
 
 // A écrire, c'est pour les packets USB
 class AnalyzerUsbPacket;
+	// Variable modifiée au niveau du monitor
+	logic[(64*8+10*8)-1:0] dataToSend;		// pas plus de 64 byte de données
 
+	// Les champs de la variable
+	logic[7:0] size;
+	logic[8:0] rssi;
+	logic[6:0] channel;
+	logic	isAdv;
+	logic[31:0] address;
+	logic[15:0] header;
+	logic[(64*8-1):0] data;
+
+	function string getFields();
+		for(int i = 0; i < 8; i++)
+			size[i] = dataToSend[i];
+		for(int i = 0; i < 8; i++)
+			rssi[i] = dataToSend[8+i];
+		for(int i = 0; i < 7; i++)
+			channel[i] = dataToSend[17+i];
+		isAdv = dataToSend[16];
+		for(int i = 0; i < 32; i++)
+			address[i] = dataToSend[32+i];
+		for(int i = 0; i < 16; i++)
+			header[i] = dataToSend[64+i];
+		data = 0;	// Pour éffacer où on va pas écrire
+		for(int i = 0; i < (size-10)*8; i++)
+			data[i] = dataToSend[17+i];
+
+	endfunction : getFields
+
+	function string psprint();
+		$sformat(psprint, "USB Packet \nSize : %d\nRssi : %d\nChannel : %d\nAdvert : %b\nAddress : %h\nHeader : %h\nData : %h\n",
+							size, rssi, channel, isAdv, address, header, data);
+	endfunction : psprint
 endclass : AnalyzerUsbPacket
 
 /// VKR exp: pour déclarer une fifo contenant des paquets Ble
