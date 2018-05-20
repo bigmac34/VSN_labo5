@@ -28,6 +28,7 @@
 class Monitor;
 		///< VKR exp: pas besoin de setter la valeur, ça vient de l'environment
     int testcase;
+		int inc;
 
 		///< VKR exp: les interfaces sont en virtual pour que tous les objets puissent y accéder (voir comme un bus)
     virtual usb_itf vif;
@@ -37,9 +38,26 @@ class Monitor;
 
 		///< VKR exp: tâche lancée dans l'environment
     task run;
-        AnalyzerUsbPacket usb_packet = new;
-        $display("Monitor : start");
 
+				automatic AnalyzerUsbPacket usb_packet;
+				$display("Monitor : start");
+
+
+				for(int i = 0; i < 10; i++) begin
+						usb_packet = new;
+						inc = 0;
+						@(posedge vif.frame_o);
+						while (vif.frame_o == 1) begin
+								@(negedge vif.clk_i);
+								if (vif.valid_o == 1) begin
+										for (int y = 0; y < 8; y++)
+												usb_packet.dataToSend[inc*8+y] = vif.data_o[y];
+										inc = inc + 1;
+								end
+						end
+						usb_packet.getFields();
+						usb_packet.psprint();
+				end
 
 /*
         while (1) begin
