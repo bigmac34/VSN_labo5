@@ -27,6 +27,7 @@
 `include "monitor.sv"
 `include "scoreboard.sv"
 `include "environment.sv"
+`include "constant.sv"
 
 ///< VKR exp: Module = composant d'une hierarchie avec des ports d'entrée/sortie (dans la parenthese)
 module packet_analyzer_tb#(int TESTCASE = 0, int ERRNO = 0);

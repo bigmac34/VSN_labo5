@@ -24,7 +24,7 @@
 `ifndef DRIVER_SV
 `define DRIVER_SV
 
-///< VKR exp: je pense qu'il serait bien de faire avec des classe paramétrées affin de pusher les paquets dans une possible
+///< VKR exp: je pense qu'il serait bien de faire avec des classe paramétrées afin de pusher les paquets dans une possible
 ///< VKR exp: c.f. cours 1 fin, c'est dans les exemples cités
 
 class Driver;
