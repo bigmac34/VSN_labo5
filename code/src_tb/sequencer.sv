@@ -26,14 +26,14 @@
 
 class Sequencer;
 		///< VKR exp: pas besoin de setter la valeur, ça vient de l'environment
-    int testcase;
+		int testcase;
 
 		///< VKR exp: pas besoin d'instancier les fifos, c'est reçu de l'environment
     ble_fifo_t sequencer_to_driver_fifo;
     ble_fifo_t sequencer_to_scoreboard_fifo;
 
 		///< VKR exp: tâche lancée dans l'environment
-    task run;
+		task run;
 				///< VKR exp: normalement une variable dans une tâche de class n'est pas statique
 				///< VKR exp: automatic pour la définir en statique ? Pas certain
         automatic BlePacket packet;
@@ -65,6 +65,28 @@ class Sequencer;
 				end
         $display("Sequencer : end");
     endtask : run
+
+		///< JMI: Ajout pour la création
+/*		task test_dirige()
+			automatic BlePacket packet;
+			$display("Sequencer : start test_dirige ");
+
+			packet = new;
+			// Advertising
+			packet.isAdv 		= 1;
+			packet.header 	= 32'hFFFFFFFF
+			packet.rawData 	= 512'h0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF
+			packet.size 		=
+
+			// Data
+			packet.isAdv 		= 0;
+			packet.addr 		= 32'hFFFFFFFF
+			packet.header 	= 32'hFFFFFFFF
+			packet.rawData 	= 512'h0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF
+			packet.size 		=
+
+		endtask : test_dirige()
+*/
 
 endclass : Sequencer
 
