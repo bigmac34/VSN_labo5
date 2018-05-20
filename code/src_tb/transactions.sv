@@ -34,6 +34,9 @@ class BlePacket;
   logic[(64*8+16+32+8):0] dataToSend;
   int sizeToSend;
 
+	logic[31:0] fixed_address = 32'h12355678;
+	logic[31:0] fixed_address2 = 32'h55555555;
+
   /* Champs generes aleatoirement */
   logic isAdv;
   logic dataValid = 1;
@@ -46,13 +49,13 @@ class BlePacket;
 
   /* Contrainte sur la taille des donnees en fonction du type de paquet */
   constraint size_range {
-    (isAdv == 1) -> size inside {[4:15]};
+    (isAdv == 1) -> size inside {[4:4]};
     (isAdv == 0) -> size inside {[0:63]};
   }
 
   function string psprint();
     $sformat(psprint, "BlePacket\nAdvert : %b\nAddress : %h\nSize : %d\nData : %h\n",
-                                                       this.isAdv, this.addr, sizeToSend, dataToSend);
+                                                       this.isAdv, this.addr, size, dataToSend);
   endfunction : psprint
 
 	///< VKR exp: fonction appellée automatiquement après la randomisation
@@ -70,13 +73,13 @@ class BlePacket;
 		addr = 32'h12345678;
         // DeviceAddr = 0. Pour l'exemple
         for(int i=0; i<32;i++)
-            rawData[size*8-1-i] = 0;
+            rawData[size*8-32+i] = fixed_address[i];
 	end
 
 	/* Cas de l'envoi d'un paquet de données */
     else if (isAdv == 0) begin
-        // Peut-être que l'adresse devra être définie d'une certaine manière
-		addr = 0;
+  	// Peut-être que l'adresse devra être définie d'une certaine manière
+		addr = fixed_address;
     end
 
 
@@ -87,9 +90,9 @@ class BlePacket;
 		dataToSend[sizeToSend-8-32+i]=addr[i];
   $display("Sending packet with address %h\n",addr);
 	for(int i=0;i<16;i++)
-		dataToSend[sizeToSend-8-32-16+i]=0;
+		dataToSend[sizeToSend-8-32-16+i]=0; // reseting the header
 	for(int i=0;i<6;i++)
-		dataToSend[sizeToSend-8-32-16+i]=size[i];
+		dataToSend[sizeToSend-8-32-16+i]=size[i];	// Puting the size
 	for(int i=0;i<size*8;i++)
 		dataToSend[sizeToSend-8-32-16-1-i]=rawData[size*8-1-i];
   if (isAdv) begin
@@ -116,7 +119,7 @@ class AnalyzerUsbPacket;
 	logic[15:0] header;
 	logic[(64*8-1):0] data;
 
-	function string getFields();
+	function void getFields();
 		for(int i = 0; i < 8; i++)
 			size[i] = dataToSend[i];
 		for(int i = 0; i < 8; i++)
@@ -130,9 +133,9 @@ class AnalyzerUsbPacket;
 			header[i] = dataToSend[64+i];
 		data = 0;	// Pour éffacer où on va pas écrire
 		for(int i = 0; i < (size-10)*8; i++)
-			data[i] = dataToSend[17+i];
+			data[i] = dataToSend[80+i];
 
-	endfunction : getFields
+	endfunction
 
 	function string psprint();
 		$sformat(psprint, "USB Packet \nSize : %d\nRssi : %d\nChannel : %d\nAdvert : %b\nAddress : %h\nHeader : %h\nData : %h\n",

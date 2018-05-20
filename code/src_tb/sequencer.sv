@@ -47,7 +47,7 @@ class Sequencer;
 				///< VKR exp: mise dans les fifo pour le driver et le scoreboard (opérations bloquantes)
         sequencer_to_driver_fifo.put(packet);
         sequencer_to_scoreboard_fifo.put(packet);
-
+				$display(packet.psprint());
         $display("I sent an advertising packet!!!!");
 
 				///< VKR exp: envoit d'un packet random encore 9 fois (10 au total)
