@@ -56,7 +56,7 @@ class Monitor;
 								end
 						end
 						usb_packet.getFields();
-						usb_packet.psprint();
+						$display(usb_packet.psprint());
 				end
 
 /*
