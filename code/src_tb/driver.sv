@@ -47,14 +47,14 @@ class Driver;
 		        vif.valid_i <= 1;
 		        vif.channel_i <= inc;
 		        vif.rssi_i <= 4;
-						$display("Channel: %d, Position packet: %d, Valid: %d, Serial: ", inc, packet.position, packet.valid, packet.dataToSend[packet.sizeToSend - 1 - packet.position]);
+						//$display("Channel: %d, Position packet: %d, Valid: %d, Serial: ", inc, packet.position, packet.valid, packet.dataToSend[packet.sizeToSend - 1 - packet.position]);
 						packet.position++;
 						// Test la fin de l'envoi du paquet
 						if (packet.position == packet.sizeToSend) begin
 								packet.position = 0;
 								packet.valid = 0;			// le paquet n'est plus à envoyer
-								$display("Fin d'une transmission de paquet par le driver");
-								$display("Fin:Channel: %d, Position packet: %d", inc, packet.position);
+								$display("Fin d'une transmission de paquet par le driver \n");
+								$display("Fin:Channel: %d, Position packet: %d \n", inc, packet.position);
 						end
 		        @(posedge vif.clk_i);
 				end

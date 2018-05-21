@@ -42,7 +42,6 @@ class Monitor;
 				automatic AnalyzerUsbPacket usb_packet;
 				$display("Monitor : start");
 
-
 				for(int i = 0; i < 10; i++) begin
 						usb_packet = new;
 						inc = 0;
@@ -56,8 +55,8 @@ class Monitor;
 								end
 						end
 						usb_packet.getFields();
-						$display(usb_packet.psprint());
 						monitor_to_scoreboard_fifo.put(usb_packet);
+						$display("The monitor sent a %s", usb_packet.psprint());
 				end
 
 /*

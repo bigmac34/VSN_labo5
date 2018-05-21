@@ -72,6 +72,8 @@ class Environment;
 
     monitor.vif = output_itf;
 
+		scoreboard.vif = output_itf;
+
 		///< VKR exp: passage de la fifo entre le sequencer et le driver
     sequencer.sequencer_to_driver_fifo = sequencer_to_driver_fifo;
     driver.sequencer_to_driver_fifo = sequencer_to_driver_fifo;
