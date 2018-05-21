@@ -57,6 +57,7 @@ class Monitor;
 						end
 						usb_packet.getFields();
 						$display(usb_packet.psprint());
+						monitor_to_scoreboard_fifo.put(usb_packet);
 				end
 
 /*
