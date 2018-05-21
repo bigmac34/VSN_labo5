@@ -24,6 +24,7 @@
 `ifndef DRIVER_SV
 `define DRIVER_SV
 
+`include "constant.sv"
 
 class Driver;
 		///< VKR exp: pas besoin de setter la valeur, ça vient de l'environment
@@ -66,15 +67,15 @@ class Driver;
 						@(posedge vif.clk_i);
 				end
 				// Revient à la au canal 0 apres 79
-				inc = (inc + 1) % 79;
+				inc = (inc + 1) % `NB_FREQ;
     endtask
 
     task run;
 				///< VKR exp: normalement une variable dans une tâche de class n'est pas statique
 				///< VKR exp: automatic pour la définir en statique ? Pas certain
-       	automatic BlePacket tab_packet[79];
+       	automatic BlePacket tab_packet[`NB_FREQ];
 
-				for(int i=0;i<79;i++) begin
+				for(int i=0;i<`NB_FREQ;i++) begin
 						tab_packet[i] = new;
 				end
 
@@ -91,25 +92,12 @@ class Driver;
         @(posedge vif.clk_i);
         @(posedge vif.clk_i);
 
-			//	logic testfin = 1;
-
-				// Cette fonction mérite d'être mieux écrite
-
-				///< VKR exp: je sais pas si c'est optimal de faire avec un for, même problème que dans le dernier
-				///< VKR exp: est-ce qu'il y a un moyen de faire sans savoir le nombre qu'on en envoit ??
-        //for(int i=0;i<10;i++) begin
-
-				// Remplir le tableau de packet (+2 pour éviter d'envoyer sur les canaux inutiles)
-			/*	for(int i=0;i<79;i = i+2) begin
-						if(sequencer_to_driver_fifo.try_get(tab_packet[i]))
-								tab_packet[i].valid = 1;
-				end
-*/
 				testfin = 1;
-				while(1) begin
-						// Test si il y de la place dans le tableau
+				while(testfin) begin
+						// Variable de test pour savoir s'il y a encore des paquets à envoyer
 						testfin = 0;
-						for(int i=0;i<79;i = i+2) begin
+						// Test si il y de la place dans le tableau
+						for(int i=0;i<`NB_FREQ;i = i+2) begin
 								// Si l'emplacement est libre
 								if(tab_packet[i].valid == 0) begin
 										// Essai de le remplacer par des données valide
@@ -137,7 +125,7 @@ class Driver;
 										testfin = 1;
 						end
 						// Envoi de chaque bit des touts les canaux
-						for(int i=0;i<79;i++) begin
+						for(int i=0;i<`NB_FREQ;i++) begin
 								drive_bit(tab_packet[i]);
 						end
         end

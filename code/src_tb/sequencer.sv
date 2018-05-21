@@ -24,6 +24,8 @@
 `ifndef SEQUENCER_SV
 `define SEQUENCER_SV
 
+`include "constant.sv"
+
 class Sequencer;
 		///< VKR exp: pas besoin de setter la valeur, ça vient de l'environment
 		int testcase;
@@ -51,14 +53,11 @@ class Sequencer;
         sequencer_to_scoreboard_fifo.put(packet);
 				$display("The sequencer sent a %s", packet.psprint());
 
-				for(int i=0;i<7100;i++)
-					@(posedge vif.clk_i);
-
 				///< VKR exp: envoit d'un packet random encore 9 fois (10 au total)
-        for(int i=0;i<9;i++) begin // Avant 9 pour test 100
+        for(int i=0;i<9;i++) begin
 
             packet = new;								// Il ne faut pas réutiliser celui qui est dans la mailbox
-            packet.isAdv = 0;
+						packet.isAdv = 0;
             void'(packet.randomize());
 
             sequencer_to_driver_fifo.put(packet);
@@ -68,28 +67,6 @@ class Sequencer;
 				end
         $display("Sequencer : end");
     endtask : run
-
-		///< JMI: Ajout pour la création
-/*		task test_dirige()
-			automatic BlePacket packet;
-			$display("Sequencer : start test_dirige ");
-
-			packet = new;
-			// Advertising
-			packet.isAdv 		= 1;
-			packet.header 	= 32'hFFFFFFFF
-			packet.rawData 	= 512'h0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF
-			packet.size 		=
-
-			// Data
-			packet.isAdv 		= 0;
-			packet.addr 		= 32'hFFFFFFFF
-			packet.header 	= 32'hFFFFFFFF
-			packet.rawData 	= 512'h0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF
-			packet.size 		=
-
-		endtask : test_dirige()
-*/
 
 endclass : Sequencer
 

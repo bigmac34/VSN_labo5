@@ -25,13 +25,15 @@
 `ifndef TRANSACTIONS_SV
 `define TRANSACTIONS_SV
 
+`include "constant.sv"
+
 /******************************************************************************
   Input transaction
 ******************************************************************************/
 class BlePacket;
 
 	///< VKR exp: le 64 c'est 2 puissance 6 (6 bits pour la taille des données)
-  logic[(64*8+16+32+8):0] dataToSend;
+  logic[(`TAILLE_MAX_DATA+`TAILLE_ENTETE+`TAILLE_ADRESSE+`TAILLE_PREAMBULE):0] dataToSend;
   int sizeToSend;
 
 	///< JMI: Pour la gestion de l'envoi bit par bit. Ssvoir quel données on été envoyé
@@ -39,19 +41,19 @@ class BlePacket;
 	logic valid = 0;
 
 
-	logic[31:0] fixed_address = 32'h12355678;
-	logic[31:0] fixed_address2 = 32'h55555555;
+	logic[`TAILLE_ADRESSE-1:0] fixed_address = 32'h12355678;
+	logic[`TAILLE_ADRESSE-1:0] fixed_address2 = 32'h55555555;
 
   /* Champs generes aleatoirement */
   logic isAdv;
   logic dataValid = 1;
-	logic[(64*8)-1:0] data;
+	logic[`TAILLE_MAX_DATA-1:0] data;
 	///< VKR exp: avec le rand c'est ce qui va être randomisé à l'appel de .randomize() sur la class
-  rand logic[31:0] addr;
-  rand logic[15:0] header;
-  rand logic[(64*8):0] rawData;
-  rand logic[5:0] size;
-  rand logic[7:0] rssi;
+  rand logic[`TAILLE_ADRESSE-1:0] addr;
+  rand logic[`TAILLE_ENTETE-1:0] header;
+  rand logic[`TAILLE_MAX_DATA-1:0] rawData;
+  rand logic[`TAILLE_SIZE_BLE-1:0] size;
+  rand logic[`TAILLE_RSSI-1:0] rssi;
 
   /* Contrainte sur la taille des donnees en fonction du type de paquet */
   constraint size_range {
@@ -68,46 +70,48 @@ class BlePacket;
 	///< VKR exp: en l'occurence construction d'un paquet
   function void post_randomize();
 
-	logic[7:0] preamble=8'h55;   // 01010101 fixe
+	logic[`TAILLE_PREAMBULE-1:0] preamble=`PREAMBULE;   // 01010101 fixe
 
 	/* Initialisation des données à envoyer */
   	dataToSend = 0;
-  	sizeToSend=size*8+16+32+8;
+  	sizeToSend=size*8+`TAILLE_ENTETE+`TAILLE_ADRESSE+`TAILLE_PREAMBULE;
 
 	/* Cas de l'envoi d'un paquet d'advertizing */
 	if (isAdv == 1) begin
-		addr = 32'h12345678;
+			addr = `ADDRESS_ADVERTISING;
         // DeviceAddr = 0. Pour l'exemple
-        for(int i=0; i<32;i++)
-            rawData[size*8-32+i] = fixed_address[i];
+        for(int i=0; i<`TAILLE_ADRESSE;i++)
+            rawData[size*8-`TAILLE_ADRESSE+i] = fixed_address[i];
 	end
 
 	/* Cas de l'envoi d'un paquet de données */
     else if (isAdv == 0) begin
-  	// Peut-être que l'adresse devra être définie d'une certaine manière
-		addr = fixed_address;
+  			// Peut-être que l'adresse devra être définie d'une certaine manière
+				addr = fixed_address;
     end
 
 
 	/* Affectation des données à envoyer */
-	for(int i=0;i<8;i++)
- 		dataToSend[sizeToSend-8+i]=preamble[i];
-	for(int i=0;i<32;i++)
-		dataToSend[sizeToSend-8-32+i]=addr[i];
-	for(int i=0;i<16;i++)
-		dataToSend[sizeToSend-8-32-16+i]=0; // reseting the header
-	for(int i=0;i<6;i++)
-		dataToSend[sizeToSend-8-32-16+i]=size[i];	// Puting the size
+	for(int i=0;i<`TAILLE_PREAMBULE;i++)
+ 		dataToSend[sizeToSend-`TAILLE_PREAMBULE+i]=preamble[i];
+	for(int i=0;i<`TAILLE_ADRESSE;i++)
+		dataToSend[sizeToSend-`TAILLE_PREAMBULE-`TAILLE_ADRESSE+i]=addr[i];
+  $display("Sending packet with address %h\n",addr);
+	for(int i=0;i<`TAILLE_ENTETE;i++)
+		dataToSend[sizeToSend-`TAILLE_PREAMBULE-`TAILLE_ADRESSE-`TAILLE_ENTETE+i]=0; // reseting the header
+	for(int i=0;i<`TAILLE_SIZE_BLE;i++)
+		dataToSend[sizeToSend-`TAILLE_PREAMBULE-`TAILLE_ADRESSE-`TAILLE_ENTETE+i]=size[i];	// Puting the size
 	data = 0;
 	for(int i=0;i<size*8;i++) begin
-		dataToSend[sizeToSend-8-32-16-1-i]=rawData[size*8-1-i];
+		dataToSend[sizeToSend-`TAILLE_PREAMBULE-`TAILLE_ADRESSE-`TAILLE_ENTETE-1-i]=rawData[size*8-1-i];
 		data[size*8-1-i] = rawData[size*8-1-i];
 	end
 
   if (isAdv) begin
-      logic[31:0] ad;
-      for(int i=0; i < 32; i++)
-          ad[i] = dataToSend[sizeToSend-8-32-16-32+i];
+      logic[`TAILLE_DEVICE_ADDR-1:0] ad;
+      for(int i=0; i < `TAILLE_DEVICE_ADDR; i++)
+          ad[i] = dataToSend[sizeToSend-`TAILLE_PREAMBULE-`TAILLE_ADRESSE-`TAILLE_ENTETE-`TAILLE_DEVICE_ADDR+i];
+      $display("Advertising with address %h\n",ad);
   end
   endfunction : post_randomize
 
@@ -119,31 +123,32 @@ class AnalyzerUsbPacket;
 	logic[(64*8+10*8)-1:0] dataToSend;		// pas plus de 64 byte de données
 
 	// Les champs d'un packet USB
-	logic[7:0] size;
-	logic[7:0] rssi;
-	logic[6:0] channel;
+	logic[`TAILLE_SIZE_USB-1:0] size;
+	logic[`TAILLE_RSSI-1:0] rssi;
+	logic[`TAILLE_CHANNEL-1:0] channel;
 	logic	isAdv;
-	logic[31:0] address;
-	logic[15:0] header;
-	logic[(64*8-1):0] data;
+	logic[`TAILLE_ADRESSE-1:0] address;
+	logic[`TAILLE_ENTETE-1:0] header;
+	logic[(`TAILLE_MAX_DATA-1):0] data;
 
 	///< Permet de setter les champs une fois qu'un packet usb est reçu en entier
 	function void getFields();
-		for(int i = 0; i < 8; i++)		// Récupération de la taille
+		for(int i = 0; i < `TAILLE_SIZE_USB; i++)		// Récupération de la taille
 			size[i] = dataToSend[i];
-		for(int i = 0; i < 8; i++)		// Récupération du RSSI
-			rssi[i] = dataToSend[8+i];
-		for(int i = 0; i < 7; i++)		// Récupération du canal
-			channel[i] = dataToSend[17+i];
-		isAdv = dataToSend[16];				// Récupération du flag
-		for(int i = 0; i < 32; i++)		// Récupération de l'adresse
-			address[i] = dataToSend[32+i];
-		for(int i = 0; i < 16; i++)		// Récupération de l'entête
-			header[i] = dataToSend[64+i];
-		data = 0;	// Pour éffacer où on va pas écrire
-		for(int i = 0; i < (size-10); i++)	// Récupération des datas
-			for(int y = 0; y < 8; y++)
-				data[(size-10-1-i)*8+y] = dataToSend[80+i*8+y];
+		for(int i = 0; i < `TAILLE_RSSI; i++)		// Récupération du RSSI
+			rssi[i] = dataToSend[`TAILLE_SIZE_USB+i];
+		isAdv = dataToSend[`TAILLE_SIZE_USB+`TAILLE_RSSI];				// Récupération du flag
+		for(int i = 0; i < `TAILLE_CHANNEL; i++)		// Récupération du canal
+			channel[i] = dataToSend[`TAILLE_SIZE_USB+`TAILLE_RSSI+1+i];
+																	// Zone reservée de 1 octet
+		for(int i = 0; i < `TAILLE_ADRESSE; i++)		// Récupération de l'adresse
+			address[i] = dataToSend[`TAILLE_SIZE_USB+`TAILLE_RSSI+`TAILLE_CHANNEL+1+`TAILLE_RESERVED+i];
+		for(int i = 0; i < `TAILLE_ENTETE; i++)		// Récupération de l'entête
+			header[i] = dataToSend[`TAILLE_SIZE_USB+`TAILLE_RSSI+`TAILLE_CHANNEL+1+`TAILLE_RESERVED+`TAILLE_ADRESSE+i];
+		data = 0;	// Pour effacer où on va pas écrire
+		for(int i = 0; i < (size-`NB_OCTET_AVANT_DATA); i++)	// Récupération des datas
+			for(int y = 0; y < `OCTET; y++)
+				data[(size-`NB_OCTET_AVANT_DATA-1-i)*`OCTET+y] = dataToSend[`NB_OCTET_AVANT_DATA*`OCTET+i*`OCTET+y];
 
 	endfunction
 
