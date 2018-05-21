@@ -34,6 +34,11 @@ class BlePacket;
   logic[(64*8+16+32+8):0] dataToSend;
   int sizeToSend;
 
+	///< JMI: Pour la gestion de l'envoi bit par bit. Ssvoir quel données on été envoyé
+	int position = 0;
+	logic valid = 0;
+
+
 	logic[31:0] fixed_address = 32'h12355678;
 	logic[31:0] fixed_address2 = 32'h55555555;
 
