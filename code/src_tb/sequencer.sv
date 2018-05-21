@@ -40,7 +40,7 @@ class Sequencer;
 		task run;
 				///< VKR exp: normalement une variable dans une tâche de class n'est pas statique
 				///< VKR exp: automatic pour la définir en statique ? Pas certain
-        automatic BlePacket packet;
+        automatic BlePacket packet, packet2;
         $display("Sequencer : start");
 
         packet = new;
@@ -51,8 +51,7 @@ class Sequencer;
 				///< VKR exp: mise dans les fifo pour le driver et le scoreboard (opérations bloquantes)
         sequencer_to_driver_fifo.put(packet);
         sequencer_to_scoreboard_fifo.put(packet);
-				$display(packet.psprint());
-        $display("I sent an advertising packet!!!!");
+				$display("The sequencer sent a %s", packet.psprint());
 
 				///< VKR exp: envoit d'un packet random encore 9 fois (10 au total)
         for(int i=0;i<9;i++) begin
@@ -64,8 +63,7 @@ class Sequencer;
             sequencer_to_driver_fifo.put(packet);
             sequencer_to_scoreboard_fifo.put(packet);
 
-            $display("I sent a packet!!!!");
-						$display(packet.psprint());
+						$display("The sequencer sent a %s", packet.psprint());
 				end
         $display("Sequencer : end");
     endtask : run
