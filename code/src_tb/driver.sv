@@ -127,6 +127,7 @@ class Driver;
 														testfin = 1;
 												end
 												else begin
+														tab_packet[i] = new;
 														tab_packet[i].valid = 0;
 														testfin = 1;
 												end
