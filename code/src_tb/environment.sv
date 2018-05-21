@@ -67,6 +67,9 @@ class Environment;
 		///< VKR exp: passage des interfaces d'entrée et de sortie
 		///< VKR exp: c'est le moyen de communicationa avec le DUT
     driver.vif = input_itf;
+
+		sequencer.vif = input_itf;
+
     monitor.vif = output_itf;
 
 		///< VKR exp: passage de la fifo entre le sequencer et le driver

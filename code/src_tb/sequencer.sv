@@ -27,6 +27,8 @@
 class Sequencer;
 		///< VKR exp: pas besoin de setter la valeur, ça vient de l'environment
 		int testcase;
+		virtual ble_itf vif;
+
 
 		///< VKR exp: pas besoin d'instancier les fifos, c'est reçu de l'environment
     ble_fifo_t sequencer_to_driver_fifo;
@@ -50,8 +52,11 @@ class Sequencer;
 				$display(packet.psprint());
         $display("I sent an advertising packet!!!!");
 
+				for(int i=0;i<7100;i++)
+					@(posedge vif.clk_i);
+
 				///< VKR exp: envoit d'un packet random encore 9 fois (10 au total)
-        for(int i=0;i<9;i++) begin
+        for(int i=0;i<9;i++) begin // Avant 9 pour test 100
 
             packet = new;								// Il ne faut pas réutiliser celui qui est dans la mailbox
             packet.isAdv = 0;
