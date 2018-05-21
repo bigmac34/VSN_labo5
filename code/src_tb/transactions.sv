@@ -94,7 +94,6 @@ class BlePacket;
  		dataToSend[sizeToSend-8+i]=preamble[i];
 	for(int i=0;i<32;i++)
 		dataToSend[sizeToSend-8-32+i]=addr[i];
-  $display("Sending packet with address %h\n",addr);
 	for(int i=0;i<16;i++)
 		dataToSend[sizeToSend-8-32-16+i]=0; // reseting the header
 	for(int i=0;i<6;i++)
@@ -109,7 +108,6 @@ class BlePacket;
       logic[31:0] ad;
       for(int i=0; i < 32; i++)
           ad[i] = dataToSend[sizeToSend-8-32-16-32+i];
-      $display("Advertising with address %h\n",ad);
   end
   endfunction : post_randomize
 
