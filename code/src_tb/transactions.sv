@@ -40,6 +40,7 @@ class BlePacket;
   /* Champs generes aleatoirement */
   logic isAdv;
   logic dataValid = 1;
+	logic[(64*8)-1:0] data;
 	///< VKR exp: avec le rand c'est ce qui va être randomisé à l'appel de .randomize() sur la class
   rand logic[31:0] addr;
   rand logic[15:0] header;
@@ -55,7 +56,7 @@ class BlePacket;
 
   function string psprint();
     $sformat(psprint, "BlePacket\nAdvert : %b\nAddress : %h\nSize : %d\nData : %h\n",
-                                                       this.isAdv, this.addr, size, dataToSend);
+                                                       this.isAdv, this.addr, size, data);
   endfunction : psprint
 
 	///< VKR exp: fonction appellée automatiquement après la randomisation
@@ -93,8 +94,12 @@ class BlePacket;
 		dataToSend[sizeToSend-8-32-16+i]=0; // reseting the header
 	for(int i=0;i<6;i++)
 		dataToSend[sizeToSend-8-32-16+i]=size[i];	// Puting the size
-	for(int i=0;i<size*8;i++)
+	data = 0;
+	for(int i=0;i<size*8;i++) begin
 		dataToSend[sizeToSend-8-32-16-1-i]=rawData[size*8-1-i];
+		data[size*8-1-i] = rawData[size*8-1-i];
+	end
+
   if (isAdv) begin
       logic[31:0] ad;
       for(int i=0; i < 32; i++)
@@ -110,7 +115,7 @@ class AnalyzerUsbPacket;
 	// Variable modifiée au niveau du monitor
 	logic[(64*8+10*8)-1:0] dataToSend;		// pas plus de 64 byte de données
 
-	// Les champs de la variable
+	// Les champs d'un packet USB
 	logic[7:0] size;
 	logic[7:0] rssi;
 	logic[6:0] channel;
@@ -119,21 +124,23 @@ class AnalyzerUsbPacket;
 	logic[15:0] header;
 	logic[(64*8-1):0] data;
 
+	///< Permet de setter les champs une fois qu'un packet usb est reçu en entier
 	function void getFields();
-		for(int i = 0; i < 8; i++)
+		for(int i = 0; i < 8; i++)		// Récupération de la taille
 			size[i] = dataToSend[i];
-		for(int i = 0; i < 8; i++)
+		for(int i = 0; i < 8; i++)		// Récupération du RSSI
 			rssi[i] = dataToSend[8+i];
-		for(int i = 0; i < 7; i++)
+		for(int i = 0; i < 7; i++)		// Récupération du canal
 			channel[i] = dataToSend[17+i];
-		isAdv = dataToSend[16];
-		for(int i = 0; i < 32; i++)
+		isAdv = dataToSend[16];				// Récupération du flag
+		for(int i = 0; i < 32; i++)		// Récupération de l'adresse
 			address[i] = dataToSend[32+i];
-		for(int i = 0; i < 16; i++)
+		for(int i = 0; i < 16; i++)		// Récupération de l'entête
 			header[i] = dataToSend[64+i];
 		data = 0;	// Pour éffacer où on va pas écrire
-		for(int i = 0; i < (size-10)*8; i++)
-			data[i] = dataToSend[80+i];
+		for(int i = 0; i < (size-10); i++)	// Récupération des datas
+			for(int y = 0; y < 8; y++)
+				data[(size-10-1-i)*8+y] = dataToSend[80+i*8+y];
 
 	endfunction
 
