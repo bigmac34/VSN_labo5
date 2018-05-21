@@ -23,6 +23,8 @@
 `ifndef INTERFACES_SV
 `define INTERFACES_SV
 
+`include "constant.sv"
+
 ///< VKR exp: création de deux interfaces pour la connection des entrées/sorties du DUT
 ///< VKR exp: possible de travailler comme un bus (plusieurs modules connectés)
 interface ble_itf;
@@ -30,13 +32,13 @@ interface ble_itf;
     logic rst_i;
     logic serial_i;
     logic valid_i;
-    logic[6:0] channel_i;
-    logic[7:0] rssi_i;
+    logic[`TAILLE_CHANNEL-1:0] channel_i;
+    logic[`TAILLE_RSSI-1:0] rssi_i;
 endinterface : ble_itf
 
 interface usb_itf;
     logic clk_i;
-    logic[7:0] data_o;
+    logic[`TAILLE_DATA_O-1:0] data_o;
     logic valid_o;
 	logic frame_o;
 endinterface : usb_itf
