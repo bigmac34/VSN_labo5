@@ -43,11 +43,11 @@ class Driver;
 //        packet.isAdv = 1;
 //        void'(packet.randomize());
 				if(packet.valid) begin
-		        vif.serial_i <= packet.dataToSend[packet.position];
+		        vif.serial_i <= packet.dataToSend[packet.sizeToSend - 1 - packet.position];
 		        vif.valid_i <= 1;
 		        vif.channel_i <= inc;
 		        vif.rssi_i <= 4;
-						$display("Channel: %d, Position packet: %d, valid: %d", inc, packet.position, packet.valid);
+						$display("Channel: %d, Position packet: %d, Valid: %d, Serial: ", inc, packet.position, packet.valid, packet.dataToSend[packet.sizeToSend - 1 - packet.position]);
 						packet.position++;
 						// Test la fin de l'envoi du paquet
 						if (packet.position == packet.sizeToSend) begin
