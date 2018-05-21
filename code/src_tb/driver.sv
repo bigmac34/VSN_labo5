@@ -47,17 +47,19 @@ class Driver;
 		        vif.valid_i <= 1;
 		        vif.channel_i <= inc;
 		        vif.rssi_i <= 4;
+						$display("Channel: %d, Position packet: %d, valid: %d", inc, packet.position, packet.valid);
 						packet.position++;
 						// Test la fin de l'envoi du paquet
 						if (packet.position == packet.sizeToSend) begin
 								packet.position = 0;
 								packet.valid = 0;			// le paquet n'est plus à envoyer
 								$display("Fin d'une transmission de paquet par le driver");
+								$display("Fin:Channel: %d, Position packet: %d", inc, packet.position);
 						end
 		        @(posedge vif.clk_i);
 				end
 				else begin
-						vif.serial_i <= 0;
+						vif.serial_i <= 0; //1'dx
 						vif.valid_i <= 1;
 						vif.channel_i <= inc;
 						vif.rssi_i <= 0;
@@ -98,11 +100,11 @@ class Driver;
         //for(int i=0;i<10;i++) begin
 
 				// Remplir le tableau de packet (+2 pour éviter d'envoyer sur les canaux inutiles)
-				for(int i=0;i<79;i = i+2) begin
+			/*	for(int i=0;i<79;i = i+2) begin
 						if(sequencer_to_driver_fifo.try_get(tab_packet[i]))
 								tab_packet[i].valid = 1;
 				end
-
+*/
 				testfin = 1;
 				while(1) begin
 						// Test si il y de la place dans le tableau
@@ -111,15 +113,28 @@ class Driver;
 								// Si l'emplacement est libre
 								if(tab_packet[i].valid == 0) begin
 										// Essai de le remplacer par des données valide
-										if(sequencer_to_driver_fifo.try_get(tab_packet[i])) begin
-												tab_packet[i].valid = 1;
-												testfin = 1;
+										if(sequencer_to_driver_fifo.try_peek(tab_packet[i])) begin
+												// Test si le paquet est un advertising et qu'il est sur un canal d'avertising
+												if((i==0 || i ==24 || i==78) && (tab_packet[i].isAdv == 1)) begin
+														sequencer_to_driver_fifo.try_get(tab_packet[i]);
+														tab_packet[i].valid = 1;
+														testfin = 1;
+												end
+												// Test si le paquet est une data et qu'il est sur un canal de data
+												else if((i!=0 && i!=24 && i!=78) && (tab_packet[i].isAdv == 0)) begin
+														sequencer_to_driver_fifo.try_get(tab_packet[i]);
+														tab_packet[i].valid = 1;
+														testfin = 1;
+												end
+												else begin
+														tab_packet[i].valid = 0;
+														testfin = 1;
+												end
 										end
 								end
 								else
 										testfin = 1;
 						end
-
 						// Envoi de chaque bit des touts les canaux
 						for(int i=0;i<79;i++) begin
 								drive_bit(tab_packet[i]);
