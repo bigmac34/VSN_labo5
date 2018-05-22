@@ -36,16 +36,26 @@ class Scoreboard;
     usb_fifo_t monitor_to_scoreboard_fifo;
 
 		///< fonction de comparaison des packets
-		task comparePackets(AnalyzerUsbPacket usb_packet, BlePacket ble_packet);
-			if(usb_packet.size-10 != ble_packet.size)					// Se les tailles des datas sont différentes
-				$display("Bad size on comparison\n");
-			if(usb_packet.isAdv != ble_packet.isAdv)					// Si les flag ne sont pas les mêmes
-				$display("Bad flag on comparison\n");
-			if(usb_packet.address != ble_packet.addr)					// Si les adresses ne sont pas les mêmes
-				$display("Bad address on comparison\n");
-			if(usb_packet.data != ble_packet.data)						// Si les datas ne sont pas les mêmes
-				$display("Bad data on comparison\n");
-		endtask
+		function logic comparePackets(AnalyzerUsbPacket usb_packet, BlePacket ble_packet);
+				logic isOk = 1;
+				if(usb_packet.size-10 != ble_packet.size) begin					// Se les tailles des datas sont différentes
+					$display("Bad size on comparison\n");
+					isOk = 0;
+				end
+				if(usb_packet.isAdv != ble_packet.isAdv) begin				// Si les flag ne sont pas les mêmes
+					$display("Bad flag on comparison\n");
+					isOk = 0;
+				end
+				if(usb_packet.address != ble_packet.addr)	begin			// Si les adresses ne sont pas les mêmes
+					$display("Bad address on comparison\n");
+					isOk = 0;
+				end
+				if(usb_packet.data != ble_packet.data) begin					// Si les datas ne sont pas les mêmes
+					$display("Bad data on comparison\n");
+					isOk = 0;
+				end
+				return isOk;
+		endfunction
 
 		///< VKR exp: tâche lancée dans l'environment
     task run;
@@ -54,7 +64,9 @@ class Scoreboard;
         //automatic BlePacket ble_packet = new;
 				BlePacket tab_packet[40];
 				int inc = 0;
+				int i = 0;
         AnalyzerUsbPacket usb_packet = new;
+				logic isOk = 0;
 
 				$display("Scoreboard : Start");
 
@@ -91,23 +103,29 @@ class Scoreboard;
 							// Si le packet est ajouté, on informe le champ valid
 							$display("A blepacket is recieved in the scoreboard, put in %d\n", inc);
 							tab_packet[inc].valid = 1;
-							$display("valid = %d at inc %d", tab_packet[inc].valid, inc);
+							//$display("valid = %d at inc %d", tab_packet[inc].valid, inc);
 						end
 						//$display("valid = %d", tab_packet[inc].valid);
 						// On check pour voir si on a reçu un nouveau packet du monitor
 						if(monitor_to_scoreboard_fifo.try_get(usb_packet)) begin
 								$display("An usbpacket is recieved in the scoreboard\n");
-								for(int i=0;i<40;i++) begin
-										$display("i = %d", i);
-										$display("valid = %d", tab_packet[i].valid);
+								i = 0;
+								isOk = 0;
+								while(isOk == 0 && i < 40) begin
+										//$display("i = %d", i);
+										//$display("valid = %d", tab_packet[i].valid);
 										if (tab_packet[i].valid == 1) begin
-												$display("%d enter in if", i);
 												// Check that everything is fine
 												$display("The scoreboard compare a %s", tab_packet[i].psprint());
 												usb_packet.getFields();										// Pour setter les attributs de la class (affichage)
 												$display("The scoreboard compare a %s", usb_packet.psprint());
-												comparePackets(usb_packet, tab_packet[i]);
+												isOk = comparePackets(usb_packet, tab_packet[i]);
+												if (isOk == 1) begin
+														tab_packet[i].valid = 0;
+														$display("I found it !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+												end
 										end
+										i = i+1;
 								end
 						end
 						@(posedge vif.clk_i);
