@@ -115,6 +115,24 @@ class BlePacket;
   end
   endfunction : post_randomize
 
+	function BlePacket copy();
+			BlePacket theCopy = new();
+			theCopy.dataToSend = this.dataToSend;
+			theCopy.sizeToSend = this.sizeToSend;
+			theCopy.position = this.position;
+			theCopy.valid = this.valid;
+			theCopy.isAdv = this.isAdv;
+			theCopy.dataValid = this.dataValid;
+			theCopy.data = this.data;
+			theCopy.addr = this.addr;
+			theCopy.header = this.header;
+			theCopy.rawData = this.rawData;
+			theCopy.size = this.size;
+			theCopy.rssi = this.rssi;
+
+			return theCopy;
+	endfunction
+
 endclass : BlePacket
 
 // A écrire, c'est pour les packets USB
@@ -156,6 +174,7 @@ class AnalyzerUsbPacket;
 		$sformat(psprint, "USB Packet \nSize : %d\nRssi : %d\nChannel : %d\nAdvert : %b\nAddress : %h\nHeader : %h\nData : %h\n",
 							size, rssi, channel, isAdv, address, header, data);
 	endfunction : psprint
+
 endclass : AnalyzerUsbPacket
 
 /// VKR exp: pour déclarer une fifo contenant des paquets Ble

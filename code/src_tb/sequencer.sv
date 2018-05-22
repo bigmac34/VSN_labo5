@@ -47,10 +47,11 @@ class Sequencer;
         packet.isAdv = 1;
 				///< VKR exp: void' bit de status retourné par randomize() casté en void car ignoré (il dit si la rando. c'est bien passée)
         void'(packet.randomize());
+				packet2 = packet.copy();
 
 				///< VKR exp: mise dans les fifo pour le driver et le scoreboard (opérations bloquantes)
         sequencer_to_driver_fifo.put(packet);
-        sequencer_to_scoreboard_fifo.put(packet);
+        sequencer_to_scoreboard_fifo.put(packet2);
 				$display("The sequencer sent a %s", packet.psprint());
 
 				///< VKR exp: envoit d'un packet random encore 9 fois (10 au total)
@@ -59,9 +60,10 @@ class Sequencer;
             packet = new;								// Il ne faut pas réutiliser celui qui est dans la mailbox
 						packet.isAdv = 0;
             void'(packet.randomize());
+						packet2 = packet.copy();
 
             sequencer_to_driver_fifo.put(packet);
-            sequencer_to_scoreboard_fifo.put(packet);
+            sequencer_to_scoreboard_fifo.put(packet2);
 
 						$display("The sequencer sent a %s", packet.psprint());
 				end
