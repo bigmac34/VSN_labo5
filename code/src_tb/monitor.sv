@@ -56,7 +56,8 @@ class Monitor;
 						end
 						usb_packet.getFields();
 						monitor_to_scoreboard_fifo.put(usb_packet);
-						$display("The monitor sent a %s", usb_packet.psprint());
+						//$display("The monitor sent a %s", usb_packet.psprint());
+						$display("The monitor sent an usbpacket\n");
 				end
 
 /*

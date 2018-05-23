@@ -96,7 +96,7 @@ class BlePacket;
  		dataToSend[sizeToSend-`TAILLE_PREAMBULE+i]=preamble[i];
 	for(int i=0;i<`TAILLE_ADRESSE;i++)
 		dataToSend[sizeToSend-`TAILLE_PREAMBULE-`TAILLE_ADRESSE+i]=addr[i];
-  $display("Sending packet with address %h\n",addr);
+  //$display("Sending packet with address %h\n",addr);
 	for(int i=0;i<`TAILLE_ENTETE;i++)
 		dataToSend[sizeToSend-`TAILLE_PREAMBULE-`TAILLE_ADRESSE-`TAILLE_ENTETE+i]=0; // reseting the header
 	for(int i=0;i<`TAILLE_SIZE_BLE;i++)
@@ -111,7 +111,7 @@ class BlePacket;
       logic[`TAILLE_DEVICE_ADDR-1:0] ad;
       for(int i=0; i < `TAILLE_DEVICE_ADDR; i++)
           ad[i] = dataToSend[sizeToSend-`TAILLE_PREAMBULE-`TAILLE_ADRESSE-`TAILLE_ENTETE-`TAILLE_DEVICE_ADDR+i];
-      $display("Advertising with address %h\n",ad);
+      //$display("Advertising with address %h\n",ad);
   end
   endfunction : post_randomize
 

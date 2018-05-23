@@ -52,7 +52,8 @@ class Sequencer;
 				///< VKR exp: mise dans les fifo pour le driver et le scoreboard (opérations bloquantes)
         sequencer_to_driver_fifo.put(packet);
         sequencer_to_scoreboard_fifo.put(packet2);
-				$display("The sequencer sent a %s", packet.psprint());
+				//$display("The sequencer sent a %s", packet.psprint());
+				$display("The sequencer sent a blepacket\n");
 
 				///< VKR exp: envoit d'un packet random encore 9 fois (10 au total)
         for(int i=0;i<9;i++) begin
@@ -65,7 +66,8 @@ class Sequencer;
             sequencer_to_driver_fifo.put(packet);
             sequencer_to_scoreboard_fifo.put(packet2);
 
-						$display("The sequencer sent a %s", packet.psprint());
+						//$display("The sequencer sent a %s", packet.psprint());
+						$display("The sequencer sent a blepacket\n");
 				end
         $display("Sequencer : end");
     endtask : run

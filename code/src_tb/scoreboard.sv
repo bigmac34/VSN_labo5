@@ -39,19 +39,19 @@ class Scoreboard;
 		function logic comparePackets(AnalyzerUsbPacket usb_packet, BlePacket ble_packet);
 				logic isOk = 1;
 				if(usb_packet.size-10 != ble_packet.size) begin					// Se les tailles des datas sont différentes
-					$display("Bad size on comparison\n");
+					$display("The scoreboard sees a bad size on comparison\n");
 					isOk = 0;
 				end
 				if(usb_packet.isAdv != ble_packet.isAdv) begin				// Si les flag ne sont pas les mêmes
-					$display("Bad flag on comparison\n");
+					$display("The scoreboard sees a bad flag on comparison\n");
 					isOk = 0;
 				end
 				if(usb_packet.address != ble_packet.addr)	begin			// Si les adresses ne sont pas les mêmes
-					$display("Bad address on comparison\n");
+					$display("The scoreboard sees a bad address on comparison\n");
 					isOk = 0;
 				end
 				if(usb_packet.data != ble_packet.data) begin					// Si les datas ne sont pas les mêmes
-					$display("Bad data on comparison\n");
+					$display("The scoreboard sees a bad data on comparison\n");
 					isOk = 0;
 				end
 				return isOk;
@@ -67,6 +67,7 @@ class Scoreboard;
 				int i = 0;
         AnalyzerUsbPacket usb_packet = new;
 				logic isOk = 0;
+				int stop = 0;
 
 				$display("Scoreboard : Start");
 
@@ -75,23 +76,7 @@ class Scoreboard;
 						tab_packet[i] = new;
 				end
 
-
-
-
-
-				///< VKR exp: je sais pas si c'est optimal de faire avec un for, même problème que dans le dernier
-				///< VKR exp: est-ce qu'il y a un moyen de faire sans savoir le nombre qu'on en envoit ??
-        /*for(int i=0; i< 10; i++) begin
-            sequencer_to_scoreboard_fifo.get(ble_packet);
-            monitor_to_scoreboard_fifo.get(usb_packet);
-            // Check that everything is fine
-						$display("The scoreboard compare a %s", ble_packet.psprint());
-						usb_packet.getFields();										// Pour setter les attributs de la class (affichage)
-						$display("The scoreboard compare a %s", usb_packet.psprint());
-						comparePackets(usb_packet, ble_packet, i);
-        end*/
-
-				while(1) begin
+				while(stop < 10) begin
 						inc = 0;
 						// On vient chercher le premier emplacement libre
 						while (tab_packet[inc].valid == 1) begin
@@ -101,14 +86,16 @@ class Scoreboard;
 						// On check pour voir si on a reçu un nouveau packet du sequencer
 						if(sequencer_to_scoreboard_fifo.try_get(tab_packet[inc])) begin
 							// Si le packet est ajouté, on informe le champ valid
-							$display("A blepacket is recieved in the scoreboard, put in %d\n", inc);
+							//$display("A blepacket is recieved in the scoreboard, put in %d\n", inc);
+							$display("The scoreboard recieved a blepacket\n");
 							tab_packet[inc].valid = 1;
 							//$display("valid = %d at inc %d", tab_packet[inc].valid, inc);
 						end
 						//$display("valid = %d", tab_packet[inc].valid);
 						// On check pour voir si on a reçu un nouveau packet du monitor
 						if(monitor_to_scoreboard_fifo.try_get(usb_packet)) begin
-								$display("An usbpacket is recieved in the scoreboard\n");
+								stop = stop + 1;
+								$display("The scoreboard recieved an usbpacket\n");
 								i = 0;
 								isOk = 0;
 								while(isOk == 0 && i < 40) begin
@@ -116,16 +103,20 @@ class Scoreboard;
 										//$display("valid = %d", tab_packet[i].valid);
 										if (tab_packet[i].valid == 1) begin
 												// Check that everything is fine
-												$display("The scoreboard compare a %s", tab_packet[i].psprint());
+												//$display("The scoreboard compare a %s", tab_packet[i].psprint());
 												usb_packet.getFields();										// Pour setter les attributs de la class (affichage)
-												$display("The scoreboard compare a %s", usb_packet.psprint());
+												//$display("The scoreboard compare a %s", usb_packet.psprint());
+												$display("The scoreboard compare two packets\n");
 												isOk = comparePackets(usb_packet, tab_packet[i]);
 												if (isOk == 1) begin
 														tab_packet[i].valid = 0;
-														$display("I found it !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+														$display("The scoresboard found a match between a ubspacket and a blepacket goooooooooooooooooooooooood\n");
 												end
 										end
 										i = i+1;
+								end
+								if (isOk == 0) begin
+										$display("The scoreboard found no match for this usbpacket  baaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaad\n");
 								end
 						end
 						@(posedge vif.clk_i);
