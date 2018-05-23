@@ -54,8 +54,9 @@ class Driver;
 						if (packet.position == packet.sizeToSend) begin
 								packet.position = 0;
 								packet.valid = 0;			// le paquet n'est plus à envoyer
-								$display("Fin d'une transmission de paquet par le driver \n");
-								$display("Fin:Channel: %d, Position packet: %d \n", inc, packet.position);
+								//$display("Fin d'une transmission de paquet par le driver \n");
+								$display("The driver just ended a transmission on the DUT \n");
+								//$display("Fin:Channel: %d, Position packet: %d \n", inc, packet.position);
 						end
 		        @(posedge vif.clk_i);
 				end
