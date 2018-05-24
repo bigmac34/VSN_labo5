@@ -41,23 +41,23 @@ class Scoreboard;
 		function logic comparePackets(AnalyzerUsbPacket usb_packet, BlePacket ble_packet, int compNumb);
 				logic isOk = 1;
 				if(usb_packet.size-10 != ble_packet.size) begin					// Si les tailles des datas sont différentes
-						//$display("The scoreboard sees a bad size on comparison number %d\n", compNumb);  // dispaly error fatal
+						$display("The scoreboard sees a bad size on comparison number %d\n", compNumb);  // dispaly error fatal
 						isOk = 0;
 				end
 				if(usb_packet.rssi != ble_packet.rssi) begin						// Si le rssi jouée n'est pas le même que celui reçu dans le packet_usb
-						//$display("The scoreboard sees a bad rssi on comparison number %d\n", compNumb);
+						$display("The scoreboard sees a bad rssi on comparison number %d\n", compNumb);
 						isOk = 0;
 				end
 				if(usb_packet.isAdv != ble_packet.isAdv) begin				// Si les flag ne sont pas les mêmes
-						//$display("The scoreboard sees a bad flag on comparison number %d\n", compNumb);
+						$display("The scoreboard sees a bad flag on comparison number %d\n", compNumb);
 						isOk = 0;
 				end
 				if(usb_packet.address != ble_packet.addr)	begin			// Si les adresses ne sont pas les mêmes
-						//$display("The scoreboard sees a bad address on comparison number %d\n", compNumb);
+						$display("The scoreboard sees a bad address on comparison number %d\n", compNumb);
 						isOk = 0;
 				end
 				if(usb_packet.data != ble_packet.data) begin					// Si les datas ne sont pas les mêmes
-						//$display("The scoreboard sees a bad data on comparison number %d\n", compNumb);
+						$display("The scoreboard sees a bad data on comparison number %d\n", compNumb);
 						isOk = 0;
 				end
 				return isOk;
