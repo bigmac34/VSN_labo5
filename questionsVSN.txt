@@ -1,0 +1,20 @@
+Questions :
+
+1) Quels composants ne doivent pas dépendre d'un nombre de paquets joués (pour la boucle for ou while)
+   -- En fait comment savoir quand le moniteur n'a plus besoin de scanner par exemple et peut s'arrêter watrchdog
+
+2) Est-ce que c'est la bonne méthode avec la copie des paquets de la mailbox dans un tableau local ?
+
+3) Quelle direction prendre pour la couverture ?  // Il faut un peu savoir comment
+
+4) Mettre simplement des assert à la place des if pour la vérification ?
+
+5) Est-ce que c'est juste de faire des new pour initialiser les tableau de packet dans le driver et le scoreboard ?
+
+5) On retrouve souvent le #devant des paramètres de fct.
+
+
+// Faire un tableau avec les address d'advertising reçue afin de faire un premier test pour voir si on est bien sensé reçevoir un paquet avec cette adresse
+// Ensuite, faire le controle sur les champs entre les deux paquets
+
+// Pour la couvertue, regarder si on couvre bien la taille des paquets par exmple (de 4 à 64 byte)
