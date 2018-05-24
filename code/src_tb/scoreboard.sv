@@ -39,7 +39,7 @@ class Scoreboard;
 		function logic comparePackets(AnalyzerUsbPacket usb_packet, BlePacket ble_packet);
 				logic isOk = 1;
 				if(usb_packet.size-10 != ble_packet.size) begin					// Se les tailles des datas sont différentes
-					$display("The scoreboard sees a bad size on comparison\n");
+					$display("The scoreboard sees a bad size on comparison\n");  // dispaly error fatal
 					isOk = 0;
 				end
 				if(usb_packet.isAdv != ble_packet.isAdv) begin				// Si les flag ne sont pas les mêmes
