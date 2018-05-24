@@ -47,7 +47,7 @@ class Driver;
 		        vif.serial_i <= packet.dataToSend[packet.sizeToSend - 1 - packet.position];
 		        vif.valid_i <= 1;
 		        vif.channel_i <= inc;
-		        vif.rssi_i <= 4;
+		        vif.rssi_i <= packet.rssi;
 						//$display("Channel: %d, Position packet: %d, Valid: %d, Serial: ", inc, packet.position, packet.valid, packet.dataToSend[packet.sizeToSend - 1 - packet.position]);
 						packet.position++;
 						// Test la fin de l'envoi du paquet
@@ -61,7 +61,7 @@ class Driver;
 		        @(posedge vif.clk_i);
 				end
 				else begin
-						vif.serial_i <= 0; //1'dx
+						vif.serial_i <= 1;		// Pour coller avec le préambule
 						vif.valid_i <= 1;
 						vif.channel_i <= inc;
 						vif.rssi_i <= 0;
