@@ -13,7 +13,7 @@ proc vhdl_compile { } {
 }
 
 #------------------------------------------------------------------------------
-proc sim_start { testcase errno} {
+proc sim_start {testcase errno} {
 
   vsim -t 1ns -novopt -GTESTCASE=$testcase -GERRNO=$errno work.packet_analyzer_tb
 #  do wave.do
@@ -23,7 +23,7 @@ proc sim_start { testcase errno} {
 }
 
 #------------------------------------------------------------------------------
-proc do_all { testcase errno } {
+proc do_all {testcase errno} {
   vhdl_compile
   sim_start $testcase $errno
 }
@@ -44,13 +44,13 @@ global Path_TB
 
 # start of sequence -------------------------------------------------
 
-if {$argc==1} {
+if {$argc>0} {
   if {[string compare $1 "all"] == 0} {
-    do_all 0 0
+    do_all 0 $2
   } elseif {[string compare $1 "comp_vhdl"] == 0} {
     vhdl_compile
   } elseif {[string compare $1 "sim"] == 0} {
-    sim_start 0
+    sim_start 0 $2
   }
 
 } else {
