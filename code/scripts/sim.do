@@ -54,5 +54,5 @@ if {$argc==1} {
   }
 
 } else {
-  do_all 0 2
+  do_all 0 0
 }

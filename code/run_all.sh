@@ -1,0 +1,7 @@
+vsim -c -do "do ../scripts/sim.do"
+vsim -c -do "do ../scripts/sim.do sim 1"
+vsim -c -do "do ../scripts/sim.do sim 2"
+vsim -c -do "do ../scripts/sim.do sim 3"
+vsim -c -do "do ../scripts/sim.do sim 4"
+vsim -c -do "do ../scripts/sim.do sim 5"
+vsim -c -do "do ../scripts/sim.do sim 6"
