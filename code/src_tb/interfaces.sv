@@ -43,4 +43,8 @@ interface usb_itf;
 	logic frame_o;
 endinterface : usb_itf
 
+interface run_itf;
+    logic isRunning = 1;
+endinterface : run_itf
+
 `endif // INTERFACES_SV

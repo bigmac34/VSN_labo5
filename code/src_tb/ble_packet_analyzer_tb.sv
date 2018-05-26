@@ -37,6 +37,7 @@ module packet_analyzer_tb#(int TESTCASE = 0, int ERRNO = 0);
 		///< VKR exp: possible de travailler comme un bus (plusieurs modules connectés)
     ble_itf input_itf();
     usb_itf output_itf();
+		run_itf wd_sb_itf();
 
 		///< VKR exp: instanciation du dut par nommage des ports
     ble_packet_analyzer#(ERRNO,0) dut(
@@ -72,6 +73,7 @@ module packet_analyzer_tb#(int TESTCASE = 0, int ERRNO = 0);
 
         env.input_itf = input_itf;		///< VKR exp: assignation d'attributs
         env.output_itf = output_itf;
+				env.wd_sb_itf = wd_sb_itf;
         env.testcase = TESTCASE;
         env.build;										///< VKR exp: appel de tasks (procedures) de Environment
         env.run();										///< VKR exp: run fait l'objet d'un fork (attente de fin de toutes les taches)
