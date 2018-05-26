@@ -21,6 +21,9 @@
 -- Ver   Date        	Person     			Comments
 -- 1.0	 20.05.2018		JMI							Création
 ------------------------------------------------------------------------------*/
+`ifndef CONSTANT_SV
+`define CONSTANT_SV
+
 `define TAILLE_PREAMBULE			8		// bits
 `define TAILLE_ADRESSE				32	// bits
 `define TAILLE_ENTETE					16	// bits
@@ -44,4 +47,10 @@
 
 `define NB_MAX_ADRESSE				16
 
+`define NB_MAX_SIM_CAN				40
+
 `define TAILLE_DATA_O					8	// bits
+
+typedef logic[`TAILLE_ADRESSE-1:0] address_t;
+
+`endif // CONSTANT_SV

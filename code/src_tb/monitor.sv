@@ -29,6 +29,10 @@ class Monitor;
 		///< VKR exp: pas besoin de setter la valeur, ça vient de l'environment
     int testcase;
 		int inc;
+		int i;
+		logic isRunning = 1;
+
+		logic watchdogBite = 0;
 
 		///< VKR exp: les interfaces sont en virtual pour que tous les objets puissent y accéder (voir comme un bus)
     virtual usb_itf vif;
@@ -36,13 +40,18 @@ class Monitor;
 		///< VKR exp: pas besoin d'instancier les fifos, c'est reçu de l'environment
     usb_fifo_t monitor_to_scoreboard_fifo;
 
+		// Fonction eventuellement appellée par le watchdog (seulement si la task ne se termine pas)
+		function void printStatus();
+				$error("The monitor only catched %0d packets\n", i);
+		endfunction
+
 		///< VKR exp: tâche lancée dans l'environment
     task run;
 
 				automatic AnalyzerUsbPacket usb_packet;
 				$display("Monitor : start");
 
-				for(int i = 0; i < 10; i++) begin
+				while(i < 10) begin
 						usb_packet = new;
 						inc = 0;
 						@(posedge vif.frame_o);
@@ -58,6 +67,7 @@ class Monitor;
 						monitor_to_scoreboard_fifo.put(usb_packet);
 						//$display("The monitor sent a %s", usb_packet.psprint());
 						$display("The monitor sent an usbpacket\n");
+						i = i + 1;
 				end
 
 /*
@@ -68,9 +78,14 @@ class Monitor;
             monitor_to_scoreboard_fifo.put(usb_packet);
         end
 */
-
+		isRunning = 0;
     $display("Monitor : end");
     endtask : run
+
+	 	task watchdogDisable;
+				$display("The watchdog stopped the monitor");
+				disable run;
+		endtask : watchdogDisable;
 
 endclass : Monitor
 

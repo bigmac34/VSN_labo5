@@ -95,6 +95,21 @@ class BlePacket;
                                                        this.isAdv, this.addr, size, data);
   endfunction : psprint
 
+	function address_t getDeviceAdd();
+			address_t address;
+			for(int i=0; i<`TAILLE_ADRESSE;i++)
+					address[i] = rawData[size*8-`TAILLE_ADRESSE+i];
+			$display("The device address in the advertising is %0h \n", address);
+			return address;
+	endfunction : getDeviceAdd
+
+	function address_t getPacketAdd();
+			address_t address;
+			address = this.addr;
+			//$display("The address read in the advertising is %0h", address);
+			return address;
+	endfunction : getPacketAdd
+
 	///< VKR exp: fonction appellée automatiquement après la randomisation
 	///< VKR exp: en l'occurence construction d'un paquet
   function void post_randomize();
