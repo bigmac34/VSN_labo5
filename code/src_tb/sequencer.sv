@@ -38,7 +38,7 @@ class Sequencer;
 
 		// Fonction eventuellement appellée par le watchdog (seulement si la task ne se termine pas)
 		function void printStatus();
-				$error("The sequencer send %0d BlePackets \n", nbPaquetSend);
+				$info("The sequencer send %0d BlePackets \n", nbPaquetSend);
 		endfunction
 
 		///< VKR exp: tâche lancée dans l'environment
