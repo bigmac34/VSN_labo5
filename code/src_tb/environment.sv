@@ -40,6 +40,9 @@ class Environment;
     virtual ble_itf input_itf;
     virtual usb_itf output_itf;
 
+		///< Pour le isRunning du watchdog et du scoreboard
+		virtual run_itf wd_sb_itf;
+
 		///< VKR exp: variable pour les différentes fifo (mailbox de TRANSACTIONS_SV)
     ble_fifo_t sequencer_to_driver_fifo;
     ble_fifo_t sequencer_to_scoreboard_fifo;
@@ -78,6 +81,9 @@ class Environment;
 
 		watchdog.vif = input_itf;
 
+		watchdog.wd_sb_itf = wd_sb_itf;
+		scoreboard.wd_sb_itf = wd_sb_itf;
+
 		///< VKR exp: passage de la fifo entre le sequencer et le driver
     sequencer.sequencer_to_driver_fifo = sequencer_to_driver_fifo;
     driver.sequencer_to_driver_fifo = sequencer_to_driver_fifo;
@@ -97,11 +103,21 @@ class Environment;
 				///< VKR exp: lancement en parrallèle de tous les objets de la structure de test
         fork
             sequencer.run();
-            driver.run();
-            monitor.run();
+            driver.run();				// Pas forcéement besoin du watchdog (c'est le scoreboard qui arrête)
+            monitor.run();			// Pas forcéement besoin du watchdog (c'est le scoreboard qui arrête)
             scoreboard.run();
-						watchdog.run(monitor, scoreboard);
+						watchdog.run(sequencer, driver, monitor, scoreboard);
         join;												///< VKR exp: attente de fin de TOUTES les tâches
+
+				// Displaying the simulation printStatus
+				$display("\n\n");
+				$display("-------------- Displaying the simulation status ---------------\n\n");
+				driver.printStatus();
+				$display("\n");
+				monitor.printStatus();
+				$display("\n");
+				scoreboard.printStatus();
+				$display("\n\n");
 
 	  endtask : run
 

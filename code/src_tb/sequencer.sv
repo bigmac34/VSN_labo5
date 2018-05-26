@@ -75,7 +75,7 @@ class Sequencer;
 				end
 
 				//Envoie de packets de données random encore 9 fois (10 au total)
-        for(int i=0;i<10;i++) begin
+        for(int i=0;i<9;i++) begin
 
             packet = new;								// Il ne faut pas réutiliser celui qui est dans la mailbox
 						packet.testcase = testcase;

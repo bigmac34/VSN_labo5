@@ -28,9 +28,8 @@
 class Monitor;
 		///< VKR exp: pas besoin de setter la valeur, ça vient de l'environment
     int testcase;
-		int inc;
-		int i;
-		logic isRunning = 1;
+		int bytePos;
+		int nbUsbPacketSent = 0;
 
 		logic watchdogBite = 0;
 
@@ -42,32 +41,32 @@ class Monitor;
 
 		// Fonction eventuellement appellée par le watchdog (seulement si la task ne se termine pas)
 		function void printStatus();
-				$error("The monitor only catched %0d packets\n", i);
+				$info("The monitor catch %0d UsbPackets\n", nbUsbPacketSent);
 		endfunction
 
 		///< VKR exp: tâche lancée dans l'environment
-    task run;
+    task run();		// Pas forcéement besoin du watchdog (c'est le scoreboard qui arrête)
 
 				automatic AnalyzerUsbPacket usb_packet;
 				$display("Monitor : start");
 
-				while(i < 10) begin
+				while (1) begin
 						usb_packet = new;
-						inc = 0;
+						bytePos = 0;
 						@(posedge vif.frame_o);
 						while (vif.frame_o == 1) begin
 								@(negedge vif.clk_i);
 								if (vif.valid_o == 1) begin
 										for (int y = 0; y < 8; y++)
-												usb_packet.dataToSend[inc*8+y] = vif.data_o[y];
-										inc = inc + 1;
+												usb_packet.dataToSend[bytePos*8+y] = vif.data_o[y];
+										bytePos ++;
 								end
 						end
 						usb_packet.getFields();
 						monitor_to_scoreboard_fifo.put(usb_packet);
 						//$display("The monitor sent a %s", usb_packet.psprint());
 						$display("The monitor sent an usbpacket\n");
-						i = i + 1;
+						nbUsbPacketSent ++;
 				end
 
 /*
@@ -78,7 +77,6 @@ class Monitor;
             monitor_to_scoreboard_fifo.put(usb_packet);
         end
 */
-		isRunning = 0;
     $display("Monitor : end");
     endtask : run
 

@@ -32,11 +32,13 @@ class Scoreboard;
 		///< VKR exp: pas besoin de setter la valeur, ça vient de l'environment
     int testcase;
 		virtual usb_itf vif;
-		logic isRunning = 1;
+		virtual run_itf wd_sb_itf;
 		int nbUsbPacketReceived = 0;
 		int nbBlePacketReceived = 0;
 		int advBleTabPos = 0;
 		logic advFound = 0;
+
+
 
 		///< VKR exp: pas besoin d'instancier les fifos, c'est reçu de l'environment
     ble_fifo_t sequencer_to_scoreboard_fifo;
@@ -44,7 +46,12 @@ class Scoreboard;
 
 		// Fonction eventuellement appellée par le watchdog (seulement si la task ne se termine pas)
 		function void printStatus();
-				$error("The scoreboard received %0d BlePackets from the sequencer and only %0d from the monitor \n", nbBlePacketReceived, nbUsbPacketReceived);
+				if (nbBlePacketReceived == nbUsbPacketReceived) begin
+						$info("The scoreboard received %0d BlePackets from the sequencer and %0d UsbPackets from the monitor \n", nbBlePacketReceived, nbUsbPacketReceived);
+				end
+				else begin
+						$error("The scoreboard received %0d BlePackets from the sequencer and %0d UsbPackets from the monitor \n", nbBlePacketReceived, nbUsbPacketReceived);
+				end
 		endfunction
 
 		///< fonction de comparaison des packets
@@ -74,11 +81,7 @@ class Scoreboard;
 		endfunction
 
 		///< VKR exp: tâche lancée dans l'environment
-    task run;
-				///< VKR exp: normalement une variable dans une tâche de class n'est pas statique
-				///< VKR exp: automatic pour la définir en statique ? Pas certain
-        // automatic BlePacket ble_packet = new;
-
+    task run();
 				// Pour stocker les paquets en tout genre
 				BlePacket bleTab[`NB_MAX_SIM_CAN];		// 40, nombre maximum de canaux
 
@@ -99,7 +102,7 @@ class Scoreboard;
 						bleTab[i] = null;
 				end
 
-				while(nbUsbPacketReceived < 10) begin
+				while(1) begin
 						findFirstEmpty = 0;
 						// On vient chercher le premier emplacement libre
 						while (bleTab[findFirstEmpty] != null) begin
@@ -107,6 +110,8 @@ class Scoreboard;
 						end
 						// On check pour voir si on a reçu un nouveau packet du sequencer
 						if(sequencer_to_scoreboard_fifo.try_get(bleTab[findFirstEmpty])) begin
+							// On dit au watchdog que ça bouge tjrs
+							wd_sb_itf.isRunning = 1;
 
 							// Si ce n'est pas un advertising, on regarde si on a reçu un advertising correspondant avant
 							if (bleTab[findFirstEmpty].isAdv == 0) begin
@@ -136,7 +141,10 @@ class Scoreboard;
 
 						// On check pour voir si on a reçu un nouveau packet usb du monitor
 						if(monitor_to_scoreboard_fifo.try_get(usb_packet)) begin
-								nbUsbPacketReceived = nbUsbPacketReceived + 1;
+								// On dit au watchdog que ça bouge tjrs
+								wd_sb_itf.isRunning = 1;
+
+								nbUsbPacketReceived ++;
 								usb_packet.getFields();										// Pour setter les attributs de la class (affichage)
 								findInBleTab = 0;
 								paquetFound = 0;
@@ -187,7 +195,6 @@ class Scoreboard;
 						end
 						@(posedge vif.clk_i);
 				end
-				isRunning = 0;
         $display("Scoreboard : End");
     endtask : run
 
