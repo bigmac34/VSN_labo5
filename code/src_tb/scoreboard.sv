@@ -32,32 +32,42 @@ class Scoreboard;
 		///< VKR exp: pas besoin de setter la valeur, ça vient de l'environment
     int testcase;
 		virtual usb_itf vif;
+		logic isRunning = 1;
+		int nbUsbPacketReceived = 0;
+		int nbBlePacketReceived = 0;
+		int advBleTabPos = 0;
+		logic advFound = 0;
 
 		///< VKR exp: pas besoin d'instancier les fifos, c'est reçu de l'environment
     ble_fifo_t sequencer_to_scoreboard_fifo;
     usb_fifo_t monitor_to_scoreboard_fifo;
 
+		// Fonction eventuellement appellée par le watchdog (seulement si la task ne se termine pas)
+		function void printStatus();
+				$error("The scoreboard received %0d BlePackets from the sequencer and only %0d from the monitor \n", nbBlePacketReceived, nbUsbPacketReceived);
+		endfunction
+
 		///< fonction de comparaison des packets
 		function logic comparePackets(AnalyzerUsbPacket usb_packet, BlePacket ble_packet, int compNumb);
 				logic isOk = 1;
 				if(usb_packet.size-10 != ble_packet.size) begin					// Si les tailles des datas sont différentes
-						$display("The scoreboard sees a bad size on comparison number %d\n", compNumb);  // dispaly error fatal
+						//$display("The scoreboard sees a bad size on comparison number %d\n", compNumb);  // dispaly error fatal
 						isOk = 0;
 				end
 				if(usb_packet.rssi != ble_packet.rssi) begin						// Si le rssi jouée n'est pas le même que celui reçu dans le packet_usb
-						$display("The scoreboard sees a bad rssi on comparison number %d\n", compNumb);
+						//$display("The scoreboard sees a bad rssi on comparison number %d\n", compNumb);
 						isOk = 0;
 				end
 				if(usb_packet.isAdv != ble_packet.isAdv) begin				// Si les flag ne sont pas les mêmes
-						$display("The scoreboard sees a bad flag on comparison number %d\n", compNumb);
+						//$display("The scoreboard sees a bad flag on comparison number %d\n", compNumb);
 						isOk = 0;
 				end
 				if(usb_packet.address != ble_packet.addr)	begin			// Si les adresses ne sont pas les mêmes
-						$display("The scoreboard sees a bad address on comparison number %d\n", compNumb);
+						//$display("The scoreboard sees a bad address on comparison number %d\n", compNumb);
 						isOk = 0;
 				end
 				if(usb_packet.data != ble_packet.data) begin					// Si les datas ne sont pas les mêmes
-						$display("The scoreboard sees a bad data on comparison number %d\n", compNumb);
+						//$display("The scoreboard sees a bad data on comparison number %d\n", compNumb);
 						isOk = 0;
 				end
 				return isOk;
@@ -70,63 +80,106 @@ class Scoreboard;
         // automatic BlePacket ble_packet = new;
 
 				// Pour stocker les paquets en tout genre
-				BlePacket bleTab[40];		// 40, nombre maximum de canaux
+				BlePacket bleTab[`NB_MAX_SIM_CAN];		// 40, nombre maximum de canaux
+
+				// Pour stocker les advertising
+				address_t advTab[`NB_MAX_ADRESSE];
 
 				AnalyzerUsbPacket usb_packet = new;		// Pas forcément besoin du new, il est déjà créé normalement
 
 				int findFirstEmpty = 0;				// Pour trouver la première case vide
 				int findInBleTab = 0;
-				int nbUsbPacketReceived = 0;
 				logic paquetFound = 0;
 				int compNumb = 0;
 
 				$display("Scoreboard : Start");
 
-				// De base, le champ valid est libre
+				// On set tout le tableau à null pour trouver les cases vide par la suite
 				for(int i=0;i<40;i++) begin
-						bleTab[i] = new;
+						bleTab[i] = null;
 				end
 
 				while(nbUsbPacketReceived < 10) begin
 						findFirstEmpty = 0;
 						// On vient chercher le premier emplacement libre
-						while (bleTab[findFirstEmpty].valid == 1) begin
+						while (bleTab[findFirstEmpty] != null) begin
 								findFirstEmpty = findFirstEmpty + 1;
 						end
-						bleTab[findFirstEmpty] = new;
 						// On check pour voir si on a reçu un nouveau packet du sequencer
 						if(sequencer_to_scoreboard_fifo.try_get(bleTab[findFirstEmpty])) begin
-							// Si le packet est ajouté, on informe le champ valid
-							//$display("A blepacket is recieved in the scoreboard, put in %d\n", findFirstEmpty);
-							$display("The scoreboard recieved a blepacket\n");
-							bleTab[findFirstEmpty].valid = 1;
+
+							// Si ce n'est pas un advertising, on regarde si on a reçu un advertising correspondant avant
+							if (bleTab[findFirstEmpty].isAdv == 0) begin
+									advFound = 0;
+									for(int i = 0; i < `NB_MAX_ADRESSE; i++) begin
+											if (bleTab[findFirstEmpty].getPacketAdd == advTab[i]) begin
+													advFound = 1;
+											end
+									end
+									if (advFound == 0) begin
+											$info("The scoreboard ignored a BlePacket, no corresponding advertising sent before by the sequencer\n");
+									end
+									else begin
+											$display("The scoreboard recieved a data BlePacket\n");
+											nbBlePacketReceived ++;
+								  end
+							end
+							else begin		// Sinon si c'est un advertising on l'ajoute simplement
+									nbBlePacketReceived ++;
+									$display("The scoreboard recieved an advertising BlePacket\n");
+									advTab[advBleTabPos] = bleTab[findFirstEmpty].getDeviceAdd();
+									advBleTabPos = (advBleTabPos + 1) % `NB_MAX_ADRESSE;
+							end
 							//$display("valid = %d at findFirstEmpty %d", tab_packet[findFirstEmpty].valid, findFirstEmpty);
 						end
 						//$display("valid = %d", tab_packet[findFirstEmpty].valid);
-						// On check pour voir si on a reçu un nouveau packet du monitor
+
+						// On check pour voir si on a reçu un nouveau packet usb du monitor
 						if(monitor_to_scoreboard_fifo.try_get(usb_packet)) begin
 								nbUsbPacketReceived = nbUsbPacketReceived + 1;
-								$display("The scoreboard recieved an usbpacket, tries to find a corresponding blePacket\n");
+								usb_packet.getFields();										// Pour setter les attributs de la class (affichage)
 								findInBleTab = 0;
 								paquetFound = 0;
 								compNumb = 0;
-								while(paquetFound == 0 && findInBleTab < 40) begin
-										//$display("i = %d", i);
-										//$display("valid = %d", tab_packet[i].valid);
-										if (bleTab[findInBleTab].valid == 1) begin
-												// Check that everything is fine
-												//$display("The scoreboard compare a %s", tab_packet[i].psprint());
-												usb_packet.getFields();										// Pour setter les attributs de la class (affichage)
-												//$display("The scoreboard compare a %s", usb_packet.psprint());
-												//$display("The scoreboard compare two packets\n");
-												paquetFound = comparePackets(usb_packet, bleTab[findInBleTab], compNumb);
-												if (paquetFound == 1) begin
-														bleTab[findInBleTab].valid = 0;							// The packet will no more be taken in next comparisons
-														$display("The scoresboard found a corresponding blePacket to the UsbPacket \n");
+
+								// Si c'est pas un advertising, on regarde dans un premier temps sîl a été enregistrer dans le scoreboard
+								if (usb_packet.isAdv == 0) begin
+										advFound = 0;
+										for(int i = 0; i < `NB_MAX_ADRESSE; i++) begin
+												if (usb_packet.address == advTab[i]) begin
+														advFound = 1;
 												end
-												compNumb = compNumb + 1;
 										end
-										findInBleTab = findInBleTab+1;
+										if (advFound == 0) begin
+												$error("No advertising received by the sequencer for the UsbPacket received by the scoreboard");
+										end
+								end
+
+								if (usb_packet.isAdv == 1 || advFound == 1) begin
+										if (usb_packet.isAdv == 0) begin
+												$display("The scoreboard recieved a valid data UsbPacket, tries to find a corresponding BlePacket\n");
+										end
+										else begin
+												$display("The scoreboard recieved an advertising UsbPacket, tries to find a corresponding BlePacket\n");
+										end
+
+										paquetFound = 0;
+										findInBleTab = 0;
+										while(paquetFound == 0 && findInBleTab < 40) begin
+
+												if (bleTab[findInBleTab] != null) begin
+														paquetFound = comparePackets(usb_packet, bleTab[findInBleTab], compNumb);
+														compNumb = compNumb + 1;
+												end
+												//$display("The scoreboard compare two packets\n");
+												//$display("The scoreboard compare a %s", usb_packet.psprint());
+												//$display("The scoreboard compare a %s", bleTab[findInBleTab].psprint());
+												if (paquetFound == 1) begin
+														bleTab[findInBleTab] = null;
+														$info("The scoresboard found a corresponding BlePacket to the UsbPacket \n");
+												end
+												findInBleTab++;
+										end
 								end
 								if (paquetFound == 0) begin
 										$error("The scoresboard found no corresponding blePacket to the UsbPacket\n");
@@ -134,8 +187,14 @@ class Scoreboard;
 						end
 						@(posedge vif.clk_i);
 				end
+				isRunning = 0;
         $display("Scoreboard : End");
     endtask : run
+
+		task watchdogDisable;
+				$display("The watchdog stopped the scoreboard");
+				disable run;
+		endtask : watchdogDisable;
 
 endclass : Scoreboard
 

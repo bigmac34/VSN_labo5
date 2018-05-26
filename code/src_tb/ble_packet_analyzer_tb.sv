@@ -26,6 +26,7 @@
 `include "driver.sv"
 `include "monitor.sv"
 `include "scoreboard.sv"
+`include "watchdog.sv"
 `include "environment.sv"
 `include "constant.sv"
 
