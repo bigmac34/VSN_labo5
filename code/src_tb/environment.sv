@@ -34,6 +34,7 @@ class Environment;
     Driver driver;
     Monitor monitor;
     Scoreboard scoreboard;
+		Watchdog watchdog;
 
 		///< VKR exp: les interfaces sont en virtual pour que tous les objets puissent y accéder (voir comme un bus)
     virtual ble_itf input_itf;
@@ -57,6 +58,7 @@ class Environment;
     driver = new;
     monitor = new;
     scoreboard = new;
+		watchdog = new;
 
 		///< VKR exp: passage du paramètre testcase à tous les objets
     sequencer.testcase = testcase;
@@ -73,6 +75,8 @@ class Environment;
     monitor.vif = output_itf;
 
 		scoreboard.vif = output_itf;
+
+		watchdog.vif = input_itf;
 
 		///< VKR exp: passage de la fifo entre le sequencer et le driver
     sequencer.sequencer_to_driver_fifo = sequencer_to_driver_fifo;
@@ -96,6 +100,7 @@ class Environment;
             driver.run();
             monitor.run();
             scoreboard.run();
+						watchdog.run(monitor, scoreboard);
         join;												///< VKR exp: attente de fin de TOUTES les tâches
 
 	  endtask : run
