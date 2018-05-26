@@ -46,13 +46,13 @@ global Path_TB
 
 if {$argc>0} {
   if {[string compare $1 "all"] == 0} {
-    do_all 0 $2
+    do_all $3 $2
   } elseif {[string compare $1 "comp_vhdl"] == 0} {
     vhdl_compile
   } elseif {[string compare $1 "sim"] == 0} {
-    sim_start 0 $2
+    sim_start $3 $2
   }
 
 } else {
-  do_all 0 7
+  do_all 0 0
 }

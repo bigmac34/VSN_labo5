@@ -36,29 +36,58 @@ class BlePacket;
   logic[(`TAILLE_MAX_DATA+`TAILLE_ENTETE+`TAILLE_ADRESSE+`TAILLE_PREAMBULE):0] dataToSend;
   int sizeToSend;
 
+	int testcase;
+
 	///< JMI: Pour la gestion de l'envoi bit par bit. Ssvoir quel données on été envoyé
 	int position = 0;
 	logic valid = 0;
 
 
-	logic[`TAILLE_ADRESSE-1:0] fixed_address = 32'h12355678;
-	logic[`TAILLE_ADRESSE-1:0] fixed_address2 = 32'h55555555;
+	//logic[`TAILLE_ADRESSE-1:0] fixed_address = 32'h12355678;
+	//logic[`TAILLE_ADRESSE-1:0] fixed_address2 = 32'h55555555;
 
   /* Champs generes aleatoirement */
   logic isAdv;
   logic dataValid = 1;
+	logic[`TAILLE_ADRESSE-1:0] addr; // L'adresse est evoyée par le séquencer
+
 	logic[`TAILLE_MAX_DATA-1:0] data;
-	///< VKR exp: avec le rand c'est ce qui va être randomisé à l'appel de .randomize() sur la class
-  rand logic[`TAILLE_ADRESSE-1:0] addr;
+	///< VKR exp: avec le rand c'est ce qui va être randomisé à l'appel de .randomize() sur la classe
   rand logic[`TAILLE_ENTETE-1:0] header;
   rand logic[`TAILLE_MAX_DATA-1:0] rawData;
   rand logic[`TAILLE_SIZE_BLE-1:0] size;
   rand logic[`TAILLE_RSSI-1:0] rssi;
 
-  /* Contrainte sur la taille des donnees en fonction du type de paquet */
-  constraint size_range {
-    (isAdv == 1) -> size inside {[4:4]};
-    (isAdv == 0) -> size inside {[0:63]};
+	/* Envoie de paquets valides */
+	/* Contrainte sur la taille des donnees en fonction du type de paquet */
+  constraint size_range_tc0 {
+	    (testcase != 1) && (testcase != 2) && (isAdv == 1) -> size inside {[4:15]};
+    	(testcase != 1) && (testcase != 2) && (isAdv == 0) -> size inside {[0:63]};
+  }
+
+	constraint size_dist_tc0 {
+				(testcase != 1) && (testcase != 2) && (isAdv == 1) -> size dist {
+					[4:6] 	:/ 1,
+					[7:12]	:/ 1,
+					[13:15]	:/ 1
+			};
+			(testcase != 1) && (testcase != 2) && (isAdv == 0) -> size dist {
+					[0:4] 	:/ 1,
+					[5:58]	:/ 1,
+					[59:63]	:/ 1
+			};
+	}
+
+	/* Les paquet ont la taille minimale */
+	constraint size_range_tc1 {
+			(testcase == 1) && (isAdv == 1) -> size inside {[4:4]};
+			(testcase == 1) && (isAdv == 0) -> size inside {[0:0]};
+	}
+
+	/* Les paquet ont la taille minimale */
+  constraint size_range_tc2 {
+	    (testcase == 2) && (isAdv == 1) -> size inside {[15:15]};
+	    (testcase == 2) && (isAdv == 0) -> size inside {[63:63]};
   }
 
   function string psprint();
@@ -70,7 +99,15 @@ class BlePacket;
 	///< VKR exp: en l'occurence construction d'un paquet
   function void post_randomize();
 
-	logic[`TAILLE_PREAMBULE-1:0] preamble=`PREAMBULE;   // 01010101 fixe
+	logic[`TAILLE_PREAMBULE-1:0] preamble;
+	if (testcase != 4) begin
+			// Preambule correct (01010101)
+			preamble=`PREAMBULE;
+	end
+	else begin
+			// Preambule incorrect (00110011)
+			preamble=`FAUX_PREAMBULE;
+	end
 
 	/* Initialisation des données à envoyer */
   	dataToSend = 0;
@@ -78,41 +115,44 @@ class BlePacket;
 
 	/* Cas de l'envoi d'un paquet d'advertizing */
 	if (isAdv == 1) begin
-			addr = `ADDRESS_ADVERTISING;
-        // DeviceAddr = 0. Pour l'exemple
+				// Ecrit l'adresse à du device à enregistrer
         for(int i=0; i<`TAILLE_ADRESSE;i++)
-            rawData[size*8-`TAILLE_ADRESSE+i] = fixed_address[i];
+            rawData[size*8-`TAILLE_ADRESSE+i] = addr[i];
+				// L'adresse du paquet est un advertising
+				addr = `ADDRESS_ADVERTISING;
 	end
 
 	/* Cas de l'envoi d'un paquet de données */
-    else if (isAdv == 0) begin
-  			// Peut-être que l'adresse devra être définie d'une certaine manière
-				addr = fixed_address;
-    end
+//  else if (isAdv == 0) begin
+			// Peut-être que l'adresse devra être définie d'une certaine manière
+//			addr = fixed_address;
+//  end
 
 
-	/* Affectation des données à envoyer */
+	/* Réaction des données à envoyer */
 	for(int i=0;i<`TAILLE_PREAMBULE;i++)
- 		dataToSend[sizeToSend-`TAILLE_PREAMBULE+i]=preamble[i];
+			dataToSend[sizeToSend-`TAILLE_PREAMBULE+i]=preamble[i];
 	for(int i=0;i<`TAILLE_ADRESSE;i++)
-		dataToSend[sizeToSend-`TAILLE_PREAMBULE-`TAILLE_ADRESSE+i]=addr[i];
-  //$display("Sending packet with address %h\n",addr);
+			dataToSend[sizeToSend-`TAILLE_PREAMBULE-`TAILLE_ADRESSE+i]=addr[i];
+	//$display("Sending packet with address %h\n",addr);
 	for(int i=0;i<`TAILLE_ENTETE;i++)
-		dataToSend[sizeToSend-`TAILLE_PREAMBULE-`TAILLE_ADRESSE-`TAILLE_ENTETE+i]=0; // reseting the header
+			dataToSend[sizeToSend-`TAILLE_PREAMBULE-`TAILLE_ADRESSE-`TAILLE_ENTETE+i]=0; // reseting the header
 	for(int i=0;i<`TAILLE_SIZE_BLE;i++)
-		dataToSend[sizeToSend-`TAILLE_PREAMBULE-`TAILLE_ADRESSE-`TAILLE_ENTETE+i]=size[i];	// Puting the size
+			dataToSend[sizeToSend-`TAILLE_PREAMBULE-`TAILLE_ADRESSE-`TAILLE_ENTETE+i]=size[i];	// Puting the size
 	data = 0;
 	for(int i=0;i<size*8;i++) begin
-		dataToSend[sizeToSend-`TAILLE_PREAMBULE-`TAILLE_ADRESSE-`TAILLE_ENTETE-1-i]=rawData[size*8-1-i];
-		data[size*8-1-i] = rawData[size*8-1-i];
+			dataToSend[sizeToSend-`TAILLE_PREAMBULE-`TAILLE_ADRESSE-`TAILLE_ENTETE-1-i]=rawData[size*8-1-i];
+			data[size*8-1-i] = rawData[size*8-1-i];
 	end
 
+	/* Pour afficher l'adresse du paquet d'advertising */
+	/*
   if (isAdv) begin
       logic[`TAILLE_DEVICE_ADDR-1:0] ad;
       for(int i=0; i < `TAILLE_DEVICE_ADDR; i++)
           ad[i] = dataToSend[sizeToSend-`TAILLE_PREAMBULE-`TAILLE_ADRESSE-`TAILLE_ENTETE-`TAILLE_DEVICE_ADDR+i];
       //$display("Advertising with address %h\n",ad);
-  end
+  end*/
   endfunction : post_randomize
 
 	function BlePacket copy();

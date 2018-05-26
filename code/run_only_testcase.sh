@@ -1,0 +1,6 @@
+vsim -do "do ../scripts/sim.do all 0 0"
+vsim -do "do ../scripts/sim.do all 0 1"
+vsim -do "do ../scripts/sim.do all 0 2"
+vsim -do "do ../scripts/sim.do all 0 3"
+vsim -do "do ../scripts/sim.do all 0 4"
+vsim -do "do ../scripts/sim.do all 0 5"

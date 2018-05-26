@@ -125,13 +125,13 @@ class Driver;
 								else
 										testfin = 1;
 						end
-						// Envoi de chaque bit des touts les canaux
+						// Envoi de chaque bit sur tout les canaux
 						for(int i=0;i<`NB_FREQ;i++) begin
 								drive_bit(tab_packet[i]);
 						end
         end
 
-				///< VKR exp: simple attente de 100 coups de clock avant de terminer
+				///< VKR exp: simple attente de 99 coups de clock avant de terminer
         for(int i=0;i<99;i++)
             @(posedge vif.clk_i);
 

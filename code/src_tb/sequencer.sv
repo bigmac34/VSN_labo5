@@ -40,26 +40,49 @@ class Sequencer;
 		task run;
 				///< VKR exp: normalement une variable dans une tâche de class n'est pas statique
 				///< VKR exp: automatic pour la définir en statique ? Pas certain
-        automatic BlePacket packet, packet2;
-        $display("Sequencer : start");
+				automatic BlePacket packet, packet2;
+				$display("Sequencer : start");
 
-        packet = new;
-        packet.isAdv = 1;
-				///< VKR exp: void' bit de status retourné par randomize() casté en void car ignoré (il dit si la rando. c'est bien passée)
-        void'(packet.randomize());
-				packet2 = packet.copy();
+				// Envoie de paquets d'advertising
+				if(testcase != 3) begin
+						// Nombres d'advertising supérieur à 16
 
-				///< VKR exp: mise dans les fifo pour le driver et le scoreboard (opérations bloquantes)
-        sequencer_to_driver_fifo.put(packet);
-        sequencer_to_scoreboard_fifo.put(packet2);
-				//$display("The sequencer sent a %s", packet.psprint());
-				$display("The sequencer sent a blepacket\n");
+						int nbAdvertising;
+						if(testcase == 5) begin
+								nbAdvertising = `NB_MAX_ADRESSE + 1;
+						end
+						// Nombres d'advertising inférieur à 16
+						else begin
+								nbAdvertising = 1;
+						end
 
-				///< VKR exp: envoit d'un packet random encore 9 fois (10 au total)
-        for(int i=0;i<9;i++) begin
+						// Envoie des Advertising
+						for(int i=0;i<nbAdvertising;i++) begin
+				        packet = new;
+								packet.testcase = testcase;
+				        packet.isAdv = 1;
+								packet.addr = 32'h1234ABCD;
+								///< VKR exp: void' bit de status retourné par randomize() casté en void car ignoré (il dit si la rando. c'est bien passée)
+				        void'(packet.randomize());
+								packet2 = packet.copy();
+
+								///< VKR exp: mise dans les fifo pour le driver et le scoreboard (opérations bloquantes)
+				        sequencer_to_driver_fifo.put(packet);
+				        sequencer_to_scoreboard_fifo.put(packet2);
+								//$display("The sequencer sent a %s", packet.psprint());
+								$display("The sequencer sent a advertisinf blepacket\n");
+						end
+				end
+
+				//Envoie de packets de données random encore 9 fois (10 au total)
+        for(int i=0;i<10;i++) begin
 
             packet = new;								// Il ne faut pas réutiliser celui qui est dans la mailbox
+						packet.testcase = testcase;
+
 						packet.isAdv = 0;
+						packet.addr = 32'h1234ABCD;
+
             void'(packet.randomize());
 						packet2 = packet.copy();
 
@@ -69,6 +92,36 @@ class Sequencer;
 						//$display("The sequencer sent a %s", packet.psprint());
 						$display("The sequencer sent a blepacket\n");
 				end
+
+				// Test fonctionnement normal
+/*				if(testcase == 0) begin
+						packet = new;
+						packet.isAdv = 1;
+						///< VKR exp: void' bit de status retourné par randomize() casté en void car ignoré (il dit si la rando. c'est bien passée)
+						void'(packet.randomize());
+						packet2 = packet.copy();
+
+						///< VKR exp: mise dans les fifo pour le driver et le scoreboard (opérations bloquantes)
+						sequencer_to_driver_fifo.put(packet);
+						sequencer_to_scoreboard_fifo.put(packet2);
+						//$display("The sequencer sent a %s", packet.psprint());
+						$display("The sequencer sent a blepacket\n");
+
+						///< VKR exp: envoit d'un packet random encore 9 fois (10 au total)
+						for(int i=0;i<9;i++) begin
+
+								packet = new;								// Il ne faut pas réutiliser celui qui est dans la mailbox
+								packet.isAdv = 0;
+								void'(packet.randomize());
+								packet2 = packet.copy();
+
+								sequencer_to_driver_fifo.put(packet);
+								sequencer_to_scoreboard_fifo.put(packet2);
+
+								//$display("The sequencer sent a %s", packet.psprint());
+								$display("The sequencer sent a blepacket\n");
+						end
+				end*/
         $display("Sequencer : end");
     endtask : run
 
