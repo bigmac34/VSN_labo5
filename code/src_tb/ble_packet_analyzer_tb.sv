@@ -64,6 +64,11 @@ module packet_analyzer_tb#(int TESTCASE = 0, int ERRNO = 0);
 		///< VKR exp: lancement d'un processus (non synthetisable) une seule fois au lancement de la simulation
     initial begin
 
+		// Message d'information de quel TESTCASE et ERRNO utilisées
+		$info("------------------------------------------------------
+         -            ERRNO : %0d      TESTCASE : %0d             -
+         ------------------------------------------------------",  ERRNO, TESTCASE);
+
         env = new;										///< VKR exp: appel du constructeur de la class
 
         env.input_itf = input_itf;		///< VKR exp: assignation d'attributs
@@ -72,7 +77,8 @@ module packet_analyzer_tb#(int TESTCASE = 0, int ERRNO = 0);
         env.testcase = TESTCASE;
         env.build;										///< VKR exp: appel de tasks (procedures) de Environment
         env.run();										///< VKR exp: run fait l'objet d'un fork (attente de fin de toutes les taches)
-        $finish;
+
+			  $finish;
     end
 
 endmodule

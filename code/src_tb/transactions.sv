@@ -38,9 +38,11 @@ class BlePacket;
 
 	int testcase;
 
-	///< JMI: Pour la gestion de l'envoi bit par bit. Ssvoir quel données on été envoyé
+	///< JMI: Pour la gestion de l'envoi bit par bit. Savoir quel données on été envoyé
 	int position = 0;
 	logic valid = 0;
+
+	int numPaquet;	// Numéro du paquet
 
   /* Champs generes aleatoirement */
   logic isAdv;
@@ -68,7 +70,7 @@ class BlePacket;
 					[13:15]	:/ 1
 			};
 			(testcase != 1) && (testcase != 2) && (isAdv == 0) -> size dist {
-					[0:4] 	:/ 1,
+					[1:4] 	:/ 1,
 					[5:58]	:/ 1,
 					[59:63]	:/ 1
 			};
@@ -77,7 +79,7 @@ class BlePacket;
 	/* Les paquet ont la taille minimale */
 	constraint size_range_tc1 {
 			(testcase == 1) && (isAdv == 1) -> size inside {[4:4]};
-			(testcase == 1) && (isAdv == 0) -> size inside {[0:0]};
+			(testcase == 1) && (isAdv == 0) -> size inside {[1:1]};
 	}
 
 	/* Les paquet ont la taille minimale */
@@ -87,8 +89,8 @@ class BlePacket;
   }
 
   function string psprint();
-    $sformat(psprint, "BlePacket\nAdvert : %b\nAddress : %h\nSize : %d\nData : %h\n",
-                                                       this.isAdv, this.addr, size, data);
+    $sformat(psprint, "BlePacket number %0d\nAdvert : %b\nAddress : %h\nSize : %d\nData : %h\n",
+                                                       this.numPaquet, this.isAdv, this.addr, size, data);
   endfunction : psprint
 
 	function address_t getDeviceAdd();
@@ -170,6 +172,7 @@ class BlePacket;
 			BlePacket theCopy = new();
 			theCopy.dataToSend = this.dataToSend;
 			theCopy.sizeToSend = this.sizeToSend;
+			theCopy.numPaquet = this.numPaquet;
 			theCopy.position = this.position;
 			theCopy.valid = this.valid;
 			theCopy.isAdv = this.isAdv;
