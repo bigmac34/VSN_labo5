@@ -42,10 +42,6 @@ class BlePacket;
 	int position = 0;
 	logic valid = 0;
 
-
-	//logic[`TAILLE_ADRESSE-1:0] fixed_address = 32'h12355678;
-	//logic[`TAILLE_ADRESSE-1:0] fixed_address2 = 32'h55555555;
-
   /* Champs generes aleatoirement */
   logic isAdv;
   logic dataValid = 1;

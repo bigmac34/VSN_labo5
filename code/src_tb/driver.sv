@@ -30,14 +30,18 @@ class Driver;
 		///< VKR exp: pas besoin de setter la valeur, ça vient de l'environment
     int testcase;
 		static logic[6:0] inc = 7'b0000000;
-
-		logic testfin;
+		int nbBlePacketPlayed = 0;
 
 		///< VKR exp: pas besoin d'instancier les fifos, c'est reçu de l'environment
     ble_fifo_t sequencer_to_driver_fifo;
 
 		///< VKR exp: les interfaces sont en virtual pour que tous les objets puissent y accéder (voir comme un bus)
     virtual ble_itf vif;
+
+		// Fonction eventuellement appellée par le watchdog (seulement si la task ne se termine pas)
+		function void printStatus();
+				$info("The driver played %0d BlePackets\n", nbBlePacketPlayed);
+		endfunction
 
 		///< VKR exp: tâche utilisée dans run pour jouer le packet sur l'interface
     task drive_bit(BlePacket packet);
@@ -71,7 +75,7 @@ class Driver;
 				inc = (inc + 1) % `NB_FREQ;
     endtask
 
-    task run;
+    task run();	// Pas forcéement besoin du watchdog (c'est le scoreboard qui arrête)
 				///< VKR exp: normalement une variable dans une tâche de class n'est pas statique
 				///< VKR exp: automatic pour la définir en statique ? Pas certain
        	automatic BlePacket tab_packet[`NB_FREQ];
@@ -93,10 +97,7 @@ class Driver;
         @(posedge vif.clk_i);
         @(posedge vif.clk_i);
 
-				testfin = 1;
-				while(testfin) begin
-						// Variable de test pour savoir s'il y a encore des paquets à envoyer
-						testfin = 0;
+				while(1) begin
 						// Test si il y de la place dans le tableau
 						for(int i=0;i<`NB_FREQ;i = i+2) begin
 								// Si l'emplacement est libre
@@ -107,23 +108,20 @@ class Driver;
 												if((i==0 || i ==24 || i==78) && (tab_packet[i].isAdv == 1)) begin
 														sequencer_to_driver_fifo.try_get(tab_packet[i]);
 														tab_packet[i].valid = 1;
-														testfin = 1;
+														nbBlePacketPlayed++;
 												end
 												// Test si le paquet est une data et qu'il est sur un canal de data
 												else if((i!=0 && i!=24 && i!=78) && (tab_packet[i].isAdv == 0)) begin
 														sequencer_to_driver_fifo.try_get(tab_packet[i]);
 														tab_packet[i].valid = 1;
-														testfin = 1;
+														nbBlePacketPlayed++;
 												end
 												else begin
 														tab_packet[i] = new;
 														tab_packet[i].valid = 0;
-														testfin = 1;
 												end
 										end
 								end
-								else
-										testfin = 1;
 						end
 						// Envoi de chaque bit sur tout les canaux
 						for(int i=0;i<`NB_FREQ;i++) begin
@@ -138,81 +136,11 @@ class Driver;
         $display("Driver : end");
     endtask : run
 
-endclass : Driver
-
-///< VKR exp: je pense qu'il serait bien de faire avec des classe paramétrées afin de pusher les paquets dans une possible
-///< VKR exp: c.f. cours 1 fin, c'est dans les exemples cités
-/*
-class Driver;
-		///< VKR exp: pas besoin de setter la valeur, ça vient de l'environment
-    int testcase;
-		static logic[6:0] inc = 7'b0000000;
-
-		///< VKR exp: pas besoin d'instancier les fifos, c'est reçu de l'environment
-    ble_fifo_t sequencer_to_driver_fifo;
-
-		///< VKR exp: les interfaces sont en virtual pour que tous les objets puissent y accéder (voir comme un bus)
-    virtual ble_itf vif;
-
-		///< VKR exp: tâche utilisée dans run pour jouer le packet sur l'interface
-    task drive_packet(BlePacket packet);
-//        packet.isAdv = 1;
-//        void'(packet.randomize());
-        vif.valid_i <= 1;
-        for(int i = packet.sizeToSend - 1;i>=0; i--) begin
-            vif.serial_i <= packet.dataToSend[i];
-            vif.channel_i <= inc;
-            vif.rssi_i <= 4;
-            @(posedge vif.clk_i);
-        end
-				inc = inc + 2;
-        vif.serial_i <= 0;
-        vif.valid_i <= 0;
-        vif.channel_i <= 0;
-        vif.rssi_i <= 0;
-        for(int i=0; i<9; i++)
-            @(posedge vif.clk_i);
-    endtask
-
-    task run;
-				///< VKR exp: normalement une variable dans une tâche de class n'est pas statique
-				///< VKR exp: automatic pour la définir en statique ? Pas certain
-       	automatic BlePacket packet;
-       	packet = new;
-
-        $display("Driver : start");
-
-				///< VKR exp: sorte de reset sur l'interface
-        vif.serial_i <= 0;
-        vif.valid_i <= 0;
-        vif.channel_i <= 0;
-        vif.rssi_i <= 0;
-        vif.rst_i <= 1;
-        @(posedge vif.clk_i);
-        vif.rst_i <= 0;
-        @(posedge vif.clk_i);
-        @(posedge vif.clk_i);
-
-				// Cette fonction mérite d'être mieux écrite
-
-				///< VKR exp: je sais pas si c'est optimal de faire avec un for, même problème que dans le dernier
-				///< VKR exp: est-ce qu'il y a un moyen de faire sans savoir le nombre qu'on en envoit ??
-        for(int i=0;i<10;i++) begin
-            sequencer_to_driver_fifo.get(packet);
-            drive_packet(packet);
-            $display("I got a packet!!!!");
-						//$display(packet.psprint());
-        end
-
-				///< VKR exp: simple attente de 100 coups de clock avant de terminer
-        for(int i=0;i<99;i++)
-            @(posedge vif.clk_i);
-
-        $display("Driver : end");
-    endtask : run
+		task watchdogDisable;
+				$display("The watchdog stopped the driver");
+				disable run;
+		endtask : watchdogDisable;
 
 endclass : Driver
-*/
-
 
 `endif // DRIVER_SV

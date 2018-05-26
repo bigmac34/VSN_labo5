@@ -29,25 +29,29 @@
 class Watchdog;
 		///< VKR exp: les interfaces sont en virtual pour que tous les objets puissent y accéder (voir comme un bus)
 		virtual ble_itf vif;
+		virtual run_itf wd_sb_itf;
 
 		///< VKR exp: tâche lancée dans l'environment
-		task run(Monitor monitor, Scoreboard scoreboard);
+		task run(Sequencer sequencer, Driver driver, Monitor monitor, Scoreboard scoreboard);
 				int i = 0;
 				$display("Watchdog : start");
-				while(i < 300000 && (monitor.isRunning || scoreboard.isRunning)) begin
+				while(i < 25000) begin		// Temps au bol (un peu mais pas trop)
+						if(wd_sb_itf.isRunning == 0) begin
+								i++;
+						end
+						else begin
+								i = 0;
+						end
+						wd_sb_itf.isRunning = 0;
+						@(posedge vif.clk_i); // Pour que le tache ne l'écrivent pas en même temps
 						@(posedge vif.clk_i);
-						i = i+1;
 				end
 
-				if(monitor.isRunning) begin
-						monitor.printStatus();
-						monitor.watchdogDisable();
-				end
-
-				if(scoreboard.isRunning) begin
-						scoreboard.printStatus();
-						scoreboard.watchdogDisable();
-				end
+				// Disable all the running task
+				$display("\n");
+				driver.watchdogDisable();
+				monitor.watchdogDisable();
+				scoreboard.watchdogDisable();
         $display("Watchdog : end");
     endtask : run
 
