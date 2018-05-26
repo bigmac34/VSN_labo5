@@ -112,6 +112,8 @@ class Environment;
 				// Displaying the simulation printStatus
 				$display("\n\n");
 				$display("-------------- Displaying the simulation status ---------------\n\n");
+				sequencer.printStatus();
+				$display("\n");
 				driver.printStatus();
 				$display("\n");
 				monitor.printStatus();
