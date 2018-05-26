@@ -28,7 +28,7 @@
 `define TAILLE_ADRESSE				32	// bits
 `define TAILLE_ENTETE					16	// bits
 `define TAILLE_DEVICE_ADDR		32	// bits
-`define TAILLE_MAX_DATA				(64*8)	// bits
+`define TAILLE_MAX_DATA				(63*8)	// bits
 `define TAILLE_SIZE_BLE				6	// bits
 `define TAILLE_RSSI						8	// bits
 

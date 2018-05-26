@@ -29,7 +29,7 @@ class Monitor;
 		///< VKR exp: pas besoin de setter la valeur, ça vient de l'environment
     int testcase;
 		int inc;
-		int i;
+		int i=0;
 		logic isRunning = 1;
 
 		logic watchdogBite = 0;
@@ -65,7 +65,7 @@ class Monitor;
 						end
 						usb_packet.getFields();
 						monitor_to_scoreboard_fifo.put(usb_packet);
-						//$display("The monitor sent a %s", usb_packet.psprint());
+						$display("The monitor sent a %s", usb_packet.psprint());
 						$display("The monitor sent an usbpacket\n");
 						i = i + 1;
 				end
