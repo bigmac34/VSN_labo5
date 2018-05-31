@@ -38,6 +38,7 @@ class Scoreboard;
 		int nbUsbPacketNotFound = 0;
 		int nbUsbPacketReceived = 0;
 		int nbBlePacketConsidered = 0;
+		int nbBadPreambule = 0;
 		int advBleTabPos = 0;
 		logic advFound = 0;
 		int nbUSBRecievedWithoutAdv = 0;
@@ -54,7 +55,8 @@ class Scoreboard;
 		// Fonction eventuellement appellée par le watchdog (seulement si la task ne se termine pas)
 		function void printStatus();
 				if ((nbBlePacketConsidered == nbUsbPacketReceived) && (nbUsbPacketNotFound == 0) && (nbUSBRecievedWithoutAdv == 0)) begin
-						$info("The scoreboard :\n         %0d BlePacket from the sequencer were considered\n         %0d UsbPackets from the monitor were received\n         %0d UsbPackets with no matching BlePaquet were received\n         %0d BlePacket were ignored because no advertising was sent before\n         %0d UsbPacket without corresponding BlePacket advertising were recieved \n", nbBlePacketConsidered, nbUsbPacketReceived, nbUsbPacketNotFound, nbBleIgnored, nbUSBRecievedWithoutAdv);
+
+						$info("The scoreboard :\n         %0d BlePacket from the sequencer were considered\n         %0d UsbPackets from the monitor were received\n         %0d UsbPackets with no matching BlePaquet were received\n         %0d BlePacket were ignored because no advertising was sent before\n         %0d BlePacket were ignored because of a bad preambule\n         %0d UsbPacket without corresponding BlePacket advertising were recieved \n", nbBlePacketConsidered, nbUsbPacketReceived, nbUsbPacketNotFound, nbBleIgnored, nbBadPreambule, nbUSBRecievedWithoutAdv);
 				end
 				else begin
 						// Récupération des paquets ble qui n'ont aucune correspondance
@@ -69,8 +71,8 @@ class Scoreboard;
 										remainingBlePaquets = {remainingBlePaquets, buffer};
 								end
 						end
-						$error("The scoreboard :\n         %0d BlePacket from the sequencer were considered\n         %0d UsbPackets from the monitor were received\n         %0d UsbPackets with no matching BlePaquet were received\n         %0d BlePacket were ignored because no advertising was sent before\n         %0d UsbPacket without corresponding BlePacket advertising were recieved \n         %s\n",
-											nbBlePacketConsidered, nbUsbPacketReceived, nbUsbPacketNotFound, nbBleIgnored, nbUSBRecievedWithoutAdv, remainingBlePaquets);
+						$error("The scoreboard :\n         %0d BlePacket from the sequencer were considered\n         %0d UsbPackets from the monitor were received\n         %0d UsbPackets with no matching BlePaquet were received\n         %0d BlePacket were ignored because no advertising was sent before\n         %0d BlePacket were ignored because of a bad preambule\n         %0d UsbPacket without corresponding BlePacket advertising were recieved \n         %s\n",
+											nbBlePacketConsidered, nbUsbPacketReceived, nbUsbPacketNotFound, nbBleIgnored, nbBadPreambule,nbUSBRecievedWithoutAdv, remainingBlePaquets);
 				end
 		endfunction
 
@@ -132,31 +134,38 @@ class Scoreboard;
 								// On dit au watchdog que ça bouge tjrs
 								wd_sb_itf.isRunning = 1;
 
-								// Si ce n'est pas un advertising, on regarde si on a reçu un advertising correspondant avant
-								if (bleTab[findFirstEmpty].isAdv == 0) begin
-										advFound = 0;
-										for(int i = 0; i < `NB_MAX_ADRESSE; i++) begin
-												if (bleTab[findFirstEmpty].getPacketAdd == advTab[i]) begin
-														advFound = 1;
+								// Si le prea est le bon, on continue
+								if (bleTab[findFirstEmpty].preamble == `PREAMBULE) begin
+										// Si ce n'est pas un advertising, on regarde si on a reçu un advertising correspondant avant
+										if (bleTab[findFirstEmpty].isAdv == 0) begin
+												advFound = 0;
+												for(int i = 0; i < `NB_MAX_ADRESSE; i++) begin
+														if (bleTab[findFirstEmpty].addr == advTab[i]) begin
+																advFound = 1;
+														end
 												end
+												if (advFound == 0) begin
+														$info("The scoreboard ignored the BlePacket number %0d, no corresponding advertising sent before by the sequencer\n", bleTab[findFirstEmpty].numPaquet);
+														bleTab[findFirstEmpty] = null; // On remet à null pour que la case puisse être prise par la suite
+														nbBleIgnored++;
+												end
+												else begin
+														$display("The scoreboard recieved a data BlePacket\n");
+														nbBlePacketConsidered ++;
+											  end
 										end
-										if (advFound == 0) begin
-												$info("The scoreboard ignored BlePacket number %0d, no corresponding advertising sent before by the sequencer\n", bleTab[findFirstEmpty].numPaquet);
-												bleTab[findFirstEmpty] = null; // On remet à null pour que la case puisse être prise par la suite
-												nbBleIgnored++;
-										end
-										else begin
-												$display("The scoreboard recieved a data BlePacket\n");
+										else begin		// Sinon si c'est un advertising on l'ajoute simplement
 												nbBlePacketConsidered ++;
-									  end
+												$display("The scoreboard recieved an advertising BlePacket\n");
+												advTab[advBleTabPos] = bleTab[findFirstEmpty].getDeviceAdd();
+												advBleTabPos = (advBleTabPos + 1) % `NB_MAX_ADRESSE;
+										end
+										//$display("valid = %d at findFirstEmpty %d", tab_packet[findFirstEmpty].valid, findFirstEmpty);
 								end
-								else begin		// Sinon si c'est un advertising on l'ajoute simplement
-										nbBlePacketConsidered ++;
-										$display("The scoreboard recieved an advertising BlePacket\n");
-										advTab[advBleTabPos] = bleTab[findFirstEmpty].getDeviceAdd();
-										advBleTabPos = (advBleTabPos + 1) % `NB_MAX_ADRESSE;
+								else begin
+										$info("The scoreboard ignored the BlePacket number %0d beacause of a bad preambule\n", bleTab[findFirstEmpty].numPaquet);
+										nbBadPreambule++;
 								end
-								//$display("valid = %d at findFirstEmpty %d", tab_packet[findFirstEmpty].valid, findFirstEmpty);
 						end
 						//$display("valid = %d", tab_packet[findFirstEmpty].valid);
 
