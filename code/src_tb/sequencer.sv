@@ -27,7 +27,7 @@
 --			2: Envoie de paquets de données avec une taille maximale
 --			3: Envoie de paquets de données sans paquet d'avertising avant
 --			4: Envoie de paquets dont le préambule est incorrect
---			5: Envoie de paquet sur plus de 16 addresse
+--		5: Envoie de paquets sur plus de 16 addresse
 --		6: Envoie d'un advertising puis d'une data, ainsi de suite
 ------------------------------------------------------------------------------*/
 `ifndef SEQUENCER_SV
@@ -68,7 +68,7 @@ class Sequencer;
 				sequencer_to_driver_fifo.put(packet);
 				sequencer_to_scoreboard_fifo.put(packet2);
 
-				//$display("The sequencer sent a %s", packet.psprint());
+				$display("The sequencer sent a %s", packet.psprint());
 				if(isAdv) begin
 						$display("The sequencer sent a advertising blepacket\n");
 				end
@@ -114,18 +114,22 @@ class Sequencer;
 						end
 				end
 
-				// Envoie d'un advertising puis d'une data, ainsi de suite
+				// Envoie sur plus de 16 advertising
 				else if(testcase == 5) begin
-						logic[`TAILLE_ADRESSE-1:0] address[`NB_MAX_ADRESSE + 1];
+						logic[`TAILLE_ADRESSE-1:0] address[`NB_MAX_ADRESSE + 3];
 						// Envoie des Advertising
-						for(int i=0;i<`NB_MAX_ADRESSE + 1;i++) begin
+						for(int i=0;i<`NB_MAX_ADRESSE+3;i++) begin
 								address[i] = $random;
 								sendBlePacket(testcase, 1, address[i], nbPaquetSend);
 								nbPaquetSend++;
 						end
 
+						// Pour attendre que les advertising soient traité par le DUT avant d'envoyer les data
+						//#((`TAILLE_PREAMBULE+`TAILLE_ADRESSE+`TAILLE_ENTETE+`TAILLE_MAX_DATA_ADVERTISING*`OCTET)*`NB_FREQ*10)ns; // 10 : periode
+						#140us;
+
 						//Envoie de packets de données random encore 9 fois (10 au total)
-						for(int i=0;i<`NB_MAX_ADRESSE + 1;i++) begin
+						for(int i=0;i<`NB_MAX_ADRESSE+3;i++) begin
 								sendBlePacket(testcase, 0, address[i], nbPaquetSend);
 								nbPaquetSend++;
 						end
@@ -138,7 +142,9 @@ class Sequencer;
 								address = $random;
 								sendBlePacket(testcase, 1, address, nbPaquetSend);
 								nbPaquetSend++;
-
+								// Pour attendre que les advertising soient traité par le DUT avant d'envoyer les data
+								//#((`TAILLE_PREAMBULE+`TAILLE_ADRESSE+`TAILLE_ENTETE+`TAILLE_MAX_DATA_ADVERTISING*`OCTET)*`NB_FREQ*10)ns; // 10 : periode
+								#140us;
 								sendBlePacket(testcase, 0, address, nbPaquetSend);
 								nbPaquetSend++;
 						end

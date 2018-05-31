@@ -36,6 +36,8 @@
 `define TAILLE_CHANNEL				7	// bits
 `define TAILLE_RESERVED				8	// bits
 
+`define TAILLE_MAX_DATA_ADVERTISING		15	// 2⁴-1 bytes
+
 `define OCTET									8	// bits
 `define NB_OCTET_AVANT_DATA		10	// bytes
 
@@ -47,7 +49,7 @@
 
 `define NB_MAX_ADRESSE				16
 
-`define NB_MAX_SIM_CAN				40
+`define NB_MAX_PAQUET_SEND		100
 
 `define TAILLE_DATA_O					8	// bits
 
