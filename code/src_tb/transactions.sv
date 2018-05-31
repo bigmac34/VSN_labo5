@@ -51,6 +51,8 @@ class BlePacket;
 
 	logic[`TAILLE_MAX_DATA-1:0] data;
 
+		logic[`TAILLE_PREAMBULE-1:0] preamble;
+
 	/* Champs generes aleatoirement */
 	///< VKR exp: avec le rand c'est ce qui va être randomisé à l'appel de .randomize() sur la classe
   rand logic[`TAILLE_ENTETE-1:0] header;
@@ -103,18 +105,11 @@ class BlePacket;
 			return address;
 	endfunction : getDeviceAdd
 
-	function address_t getPacketAdd();
-			address_t address;
-			address = this.addr;
-			//$display("The address read in the advertising is %0h", address);
-			return address;
-	endfunction : getPacketAdd
-
 	///< VKR exp: fonction appellée automatiquement après la randomisation
 	///< VKR exp: en l'occurence construction d'un paquet
   function void post_randomize();
 
-	logic[`TAILLE_PREAMBULE-1:0] preamble;
+
 	if (testcase != 4) begin
 			// Preambule correct (01010101)
 			preamble=`PREAMBULE;
@@ -185,6 +180,7 @@ class BlePacket;
 			theCopy.rawData = this.rawData;
 			theCopy.size = this.size;
 			theCopy.rssi = this.rssi;
+			theCopy.preamble = this.preamble;
 
 			return theCopy;
 	endfunction
