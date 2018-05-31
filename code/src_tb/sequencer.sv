@@ -22,13 +22,13 @@
 -- 1.0	 19.05.2018		VKR							Explication sur la structure
 --------------------------------------------------------------------------------
 -- TESTCASE:
--- 		0: Fonctionnement classique, advertising puis data
---		1: Envoie de paquets de données avec une taille minimale
---		2: Envoie de paquets de données avec une taille maximale
---		3: Envoie de paquets de données sans paquet d'avertising avant
---		4: Envoie de paquets dont le préambule est incorrect
---		5: Envoie de paquet sur plus de 16 addresse
-
+-- 		0: Fonctionnement classique, tout les advertising puis tout les data
+--			1: Envoie de paquets de données avec une taille minimale
+--			2: Envoie de paquets de données avec une taille maximale
+--			3: Envoie de paquets de données sans paquet d'avertising avant
+--			4: Envoie de paquets dont le préambule est incorrect
+--			5: Envoie de paquet sur plus de 16 addresse
+--		6: Envoie d'un advertising puis d'une data, ainsi de suite
 ------------------------------------------------------------------------------*/
 `ifndef SEQUENCER_SV
 `define SEQUENCER_SV
@@ -86,14 +86,14 @@ class Sequencer;
 				$display("Sequencer : start");
 
 				// Sequence d'envoie classique: advertising puis data
-				if(testcase < 6) begin
+				if(testcase < 5) begin
 
 						// Nombres d'advertising supérieur à 16
-						if(testcase == 5) begin
+				/*		if(testcase == 5) begin
 								nbAdvertising = `NB_MAX_ADRESSE + 1;
-						end
+						end*/
 						// Pas d'envoie de paquets d'advertising
-						else if(testcase == 3) begin
+						if(testcase == 3) begin
 								nbAdvertising = 0;
 						end
 						// Nombres d'advertising inférieur à 16
@@ -110,6 +110,23 @@ class Sequencer;
 						//Envoie de packets de données random encore 9 fois (10 au total)
 		        for(int i=0;i<nbData;i++) begin
 								sendBlePacket(testcase, 0, 32'h1234ABCD, nbPaquetSend);
+								nbPaquetSend++;
+						end
+				end
+
+				// Envoie d'un advertising puis d'une data, ainsi de suite
+				else if(testcase == 5) begin
+						logic[`TAILLE_ADRESSE-1:0] address[`NB_MAX_ADRESSE + 1];
+						// Envoie des Advertising
+						for(int i=0;i<`NB_MAX_ADRESSE + 1;i++) begin
+								address[i] = $random;
+								sendBlePacket(testcase, 1, address[i], nbPaquetSend);
+								nbPaquetSend++;
+						end
+
+						//Envoie de packets de données random encore 9 fois (10 au total)
+						for(int i=0;i<`NB_MAX_ADRESSE + 1;i++) begin
+								sendBlePacket(testcase, 0, address[i], nbPaquetSend);
 								nbPaquetSend++;
 						end
 				end
