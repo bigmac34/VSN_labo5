@@ -41,6 +41,8 @@ class Scoreboard;
 		int advBleTabPos = 0;
 		logic advFound = 0;
 		int nbUSBRecievedWithoutAdv = 0;
+		string remainingBlePaquets = "Remaining BlePaquets ";
+		string buffer = "";
 
 		// Pour stocker les paquets en tout genre
 		BlePacket bleTab[`NB_MAX_SIM_CAN];		// 40, nombre maximum de canaux
@@ -55,8 +57,20 @@ class Scoreboard;
 						$info("The scoreboard :\n         %0d BlePacket from the sequencer were considered\n         %0d UsbPackets from the monitor were received\n         %0d UsbPackets with no matching BlePaquet were received\n         %0d BlePacket were ignored because no advertising was sent before\n         %0d UsbPacket without corresponding BlePacket advertising were recieved \n", nbBlePacketConsidered, nbUsbPacketReceived, nbUsbPacketNotFound, nbBleIgnored, nbUSBRecievedWithoutAdv);
 				end
 				else begin
-						// Récupération des paquets 
-						$error("The scoreboard :\n         %0d BlePacket from the sequencer were considered\n         %0d UsbPackets from the monitor were received\n         %0d UsbPackets with no matching BlePaquet were received\n         %0d BlePacket were ignored because no advertising was sent before\n         %0d UsbPacket without corresponding BlePacket advertising were recieved \n", nbBlePacketConsidered, nbUsbPacketReceived, nbUsbPacketNotFound, nbBleIgnored, nbUSBRecievedWithoutAdv);
+						// Récupération des paquets ble qui n'ont aucune correspondance
+						for(int i = 0; i < `NB_MAX_ADRESSE; i++) begin
+								if (bleTab[i] != null) begin
+										if (bleTab[i].isAdv == 1) begin
+													$sformat(buffer, " %0d (Adv) ", bleTab[i].numPaquet);
+										end
+										else begin
+													$sformat(buffer, " %0d (Data) ", bleTab[i].numPaquet);
+										end
+										remainingBlePaquets = {remainingBlePaquets, buffer};
+								end
+						end
+						$error("The scoreboard :\n         %0d BlePacket from the sequencer were considered\n         %0d UsbPackets from the monitor were received\n         %0d UsbPackets with no matching BlePaquet were received\n         %0d BlePacket were ignored because no advertising was sent before\n         %0d UsbPacket without corresponding BlePacket advertising were recieved \n         %s\n",
+											nbBlePacketConsidered, nbUsbPacketReceived, nbUsbPacketNotFound, nbBleIgnored, nbUSBRecievedWithoutAdv, remainingBlePaquets);
 				end
 		endfunction
 
