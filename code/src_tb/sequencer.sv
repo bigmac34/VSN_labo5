@@ -68,7 +68,7 @@ class Sequencer;
 				sequencer_to_driver_fifo.put(packet);
 				sequencer_to_scoreboard_fifo.put(packet2);
 
-				$display("The sequencer sent a %s", packet.psprint());
+				//$display("The sequencer sent a %s", packet.psprint());
 				if(isAdv) begin
 						$display("The sequencer sent a advertising blepacket\n");
 				end
@@ -103,13 +103,13 @@ class Sequencer;
 
 						// Envoie des Advertising
 						for(int i=0;i<nbAdvertising;i++) begin
-								sendBlePacket(testcase, 1, 32'h1234ABCD, nbPaquetSend);
+								sendBlePacket(testcase, 1, `ADDRESS_TEST, nbPaquetSend);
 								nbPaquetSend++;
 						end
 
 						//Envoie de packets de données random encore 9 fois (10 au total)
 		        for(int i=0;i<nbData;i++) begin
-								sendBlePacket(testcase, 0, 32'h1234ABCD, nbPaquetSend);
+								sendBlePacket(testcase, 0, `ADDRESS_TEST, nbPaquetSend);
 								nbPaquetSend++;
 						end
 				end
