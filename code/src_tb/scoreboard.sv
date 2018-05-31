@@ -32,13 +32,18 @@ class Scoreboard;
 		///< VKR exp: pas besoin de setter la valeur, ça vient de l'environment
     int testcase;
 		virtual usb_itf vif;
-		virtual run_itf wd_sb_itf;
+		virtual run_itf wd_sb_itf;			// Interface pour le watchdog
+
+		int nbBleIgnored = 0;
+		int nbUsbPacketNotFound = 0;
 		int nbUsbPacketReceived = 0;
-		int nbBlePacketReceived = 0;
+		int nbBlePacketConsidered = 0;
 		int advBleTabPos = 0;
 		logic advFound = 0;
+		int nbUSBRecievedWithoutAdv = 0;
 
-
+		// Pour stocker les paquets en tout genre
+		BlePacket bleTab[`NB_MAX_SIM_CAN];		// 40, nombre maximum de canaux
 
 		///< VKR exp: pas besoin d'instancier les fifos, c'est reçu de l'environment
     ble_fifo_t sequencer_to_scoreboard_fifo;
@@ -46,11 +51,12 @@ class Scoreboard;
 
 		// Fonction eventuellement appellée par le watchdog (seulement si la task ne se termine pas)
 		function void printStatus();
-				if (nbBlePacketReceived == nbUsbPacketReceived) begin
-						$info("The scoreboard received %0d BlePackets from the sequencer and %0d UsbPackets from the monitor \n", nbBlePacketReceived, nbUsbPacketReceived);
+				if ((nbBlePacketConsidered == nbUsbPacketReceived) && (nbUsbPacketNotFound == 0) && (nbUSBRecievedWithoutAdv == 0) && (nbBleIgnored == 0)) begin
+						$info("The scoreboard :\n         %0d BlePacket from the sequencer were considered\n         %0d UsbPackets from the monitor were received\n         %0d UsbPackets with no matching BlePaquet were received\n         %0d BlePacket were ignored because no advertising was sent before\n         %0d UsbPacket without corresponding BlePacket advertising were recieved \n", nbBlePacketConsidered, nbUsbPacketReceived, nbUsbPacketNotFound, nbBleIgnored, nbUSBRecievedWithoutAdv);
 				end
 				else begin
-						$error("The scoreboard received %0d BlePackets from the sequencer and %0d UsbPackets from the monitor \n", nbBlePacketReceived, nbUsbPacketReceived);
+						// Récupération des paquets 
+						$error("The scoreboard :\n         %0d BlePacket from the sequencer were considered\n         %0d UsbPackets from the monitor were received\n         %0d UsbPackets with no matching BlePaquet were received\n         %0d BlePacket were ignored because no advertising was sent before\n         %0d UsbPacket without corresponding BlePacket advertising were recieved \n", nbBlePacketConsidered, nbUsbPacketReceived, nbUsbPacketNotFound, nbBleIgnored, nbUSBRecievedWithoutAdv);
 				end
 		endfunction
 
@@ -82,13 +88,11 @@ class Scoreboard;
 
 		///< VKR exp: tâche lancée dans l'environment
     task run();
-				// Pour stocker les paquets en tout genre
-				BlePacket bleTab[`NB_MAX_SIM_CAN];		// 40, nombre maximum de canaux
 
 				// Pour stocker les advertising
 				address_t advTab[`NB_MAX_ADRESSE];
 
-				AnalyzerUsbPacket usb_packet = new;		// Pas forcément besoin du new, il est déjà créé normalement
+				AnalyzerUsbPacket usb_packet;		// Pas forcément besoin du new, il est déjà créé normalement
 
 				int findFirstEmpty = 0;				// Pour trouver la première case vide
 				int findInBleTab = 0;
@@ -102,6 +106,7 @@ class Scoreboard;
 						bleTab[i] = null;
 				end
 
+				// Will be stopped by the
 				while(1) begin
 						findFirstEmpty = 0;
 						// On vient chercher le premier emplacement libre
@@ -110,32 +115,34 @@ class Scoreboard;
 						end
 						// On check pour voir si on a reçu un nouveau packet du sequencer
 						if(sequencer_to_scoreboard_fifo.try_get(bleTab[findFirstEmpty])) begin
-							// On dit au watchdog que ça bouge tjrs
-							wd_sb_itf.isRunning = 1;
+								// On dit au watchdog que ça bouge tjrs
+								wd_sb_itf.isRunning = 1;
 
-							// Si ce n'est pas un advertising, on regarde si on a reçu un advertising correspondant avant
-							if (bleTab[findFirstEmpty].isAdv == 0) begin
-									advFound = 0;
-									for(int i = 0; i < `NB_MAX_ADRESSE; i++) begin
-											if (bleTab[findFirstEmpty].getPacketAdd == advTab[i]) begin
-													advFound = 1;
-											end
-									end
-									if (advFound == 0) begin
-											$info("The scoreboard ignored a BlePacket, no corresponding advertising sent before by the sequencer\n");
-									end
-									else begin
-											$display("The scoreboard recieved a data BlePacket\n");
-											nbBlePacketReceived ++;
-								  end
-							end
-							else begin		// Sinon si c'est un advertising on l'ajoute simplement
-									nbBlePacketReceived ++;
-									$display("The scoreboard recieved an advertising BlePacket\n");
-									advTab[advBleTabPos] = bleTab[findFirstEmpty].getDeviceAdd();
-									advBleTabPos = (advBleTabPos + 1) % `NB_MAX_ADRESSE;
-							end
-							//$display("valid = %d at findFirstEmpty %d", tab_packet[findFirstEmpty].valid, findFirstEmpty);
+								// Si ce n'est pas un advertising, on regarde si on a reçu un advertising correspondant avant
+								if (bleTab[findFirstEmpty].isAdv == 0) begin
+										advFound = 0;
+										for(int i = 0; i < `NB_MAX_ADRESSE; i++) begin
+												if (bleTab[findFirstEmpty].getPacketAdd == advTab[i]) begin
+														advFound = 1;
+												end
+										end
+										if (advFound == 0) begin
+												$info("The scoreboard ignored BlePacket number %0d, no corresponding advertising sent before by the sequencer\n", bleTab[findFirstEmpty].numPaquet);
+												bleTab[findFirstEmpty] = null; // On remet à null pour que la case puisse être prise par la suite
+												nbBleIgnored++;
+										end
+										else begin
+												$display("The scoreboard recieved a data BlePacket\n");
+												nbBlePacketConsidered ++;
+									  end
+								end
+								else begin		// Sinon si c'est un advertising on l'ajoute simplement
+										nbBlePacketConsidered ++;
+										$display("The scoreboard recieved an advertising BlePacket\n");
+										advTab[advBleTabPos] = bleTab[findFirstEmpty].getDeviceAdd();
+										advBleTabPos = (advBleTabPos + 1) % `NB_MAX_ADRESSE;
+								end
+								//$display("valid = %d at findFirstEmpty %d", tab_packet[findFirstEmpty].valid, findFirstEmpty);
 						end
 						//$display("valid = %d", tab_packet[findFirstEmpty].valid);
 
@@ -160,6 +167,7 @@ class Scoreboard;
 										end
 										if (advFound == 0) begin
 												$error("No advertising received by the sequencer for the UsbPacket received by the scoreboard");
+												nbUSBRecievedWithoutAdv++;
 										end
 								end
 
@@ -191,6 +199,7 @@ class Scoreboard;
 								end
 								if (paquetFound == 0) begin
 										$error("The scoresboard found no corresponding blePacket to the UsbPacket\n");
+										nbUsbPacketNotFound++;
 								end
 						end
 						@(posedge vif.clk_i);
