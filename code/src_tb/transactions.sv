@@ -36,20 +36,22 @@ class BlePacket;
   logic[(`TAILLE_MAX_DATA+`TAILLE_ENTETE+`TAILLE_ADRESSE+`TAILLE_PREAMBULE):0] dataToSend;
   int sizeToSend;
 
-	int testcase;
-
 	///< JMI: Pour la gestion de l'envoi bit par bit. Savoir quel données on été envoyé
 	int position = 0;
 	logic valid = 0;
 
 	int numPaquet;	// Numéro du paquet
 
-  /* Champs generes aleatoirement */
+	// Indique un fonctionnement différent en fonction du testcase
+	int testcase = 0;
+
   logic isAdv;
   logic dataValid = 1;
 	logic[`TAILLE_ADRESSE-1:0] addr; // L'adresse est evoyée par le séquencer
 
 	logic[`TAILLE_MAX_DATA-1:0] data;
+
+	/* Champs generes aleatoirement */
 	///< VKR exp: avec le rand c'est ce qui va être randomisé à l'appel de .randomize() sur la classe
   rand logic[`TAILLE_ENTETE-1:0] header;
   rand logic[`TAILLE_MAX_DATA-1:0] rawData;
