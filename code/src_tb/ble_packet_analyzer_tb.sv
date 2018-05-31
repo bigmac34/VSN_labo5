@@ -65,9 +65,7 @@ module packet_analyzer_tb#(int TESTCASE = 0, int ERRNO = 0);
     initial begin
 
 		// Message d'information de quel TESTCASE et ERRNO utilisées
-		$info("------------------------------------------------------
-         -            ERRNO : %0d      TESTCASE : %0d             -
-         ------------------------------------------------------",  ERRNO, TESTCASE);
+		$info("------------------------------------------------------\n         -            ERRNO : %0d      TESTCASE : %0d             -\n         ------------------------------------------------------",  ERRNO, TESTCASE);
 
         env = new;										///< VKR exp: appel du constructeur de la class
 
