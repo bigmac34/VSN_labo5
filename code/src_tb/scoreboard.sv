@@ -46,7 +46,7 @@ class Scoreboard;
 		string buffer = "";
 
 		// Pour stocker les paquets en tout genre
-		BlePacket bleTab[`NB_MAX_SIM_CAN];		// 40, nombre maximum de canaux
+		BlePacket bleTab[`NB_MAX_PAQUET_SEND];		// 40, nombre maximum de canaux
 
 		///< VKR exp: pas besoin d'instancier les fifos, c'est reçu de l'environment
     ble_fifo_t sequencer_to_scoreboard_fifo;
@@ -55,6 +55,7 @@ class Scoreboard;
 		// Fonction eventuellement appellée par le watchdog (seulement si la task ne se termine pas)
 		function void printStatus();
 				if ((nbBlePacketConsidered == nbUsbPacketReceived) && (nbUsbPacketNotFound == 0) && (nbUSBRecievedWithoutAdv == 0)) begin
+
 						$info("The scoreboard :\n         %0d BlePacket from the sequencer were considered\n         %0d UsbPackets from the monitor were received\n         %0d UsbPackets with no matching BlePaquet were received\n         %0d BlePacket were ignored because no advertising was sent before\n         %0d BlePacket were ignored because of a bad preambule\n         %0d UsbPacket without corresponding BlePacket advertising were recieved \n", nbBlePacketConsidered, nbUsbPacketReceived, nbUsbPacketNotFound, nbBleIgnored, nbBadPreambule, nbUSBRecievedWithoutAdv);
 				end
 				else begin
