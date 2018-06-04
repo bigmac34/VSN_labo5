@@ -5,7 +5,7 @@
 -- Cours VSN
 --------------------------------------------------------------------------------
 --
--- File			: interfaces.sv
+-- File		: interfaces.sv
 -- Authors	: --
 --
 -- Date     : --
@@ -17,18 +17,19 @@
 --
 --------------------------------------------------------------------------------
 -- Modifications :
--- Ver   Date        	Person     			Comments
--- 1.0	 19.05.2018		VKR							Explication sur la structure
+-- Ver   Date        	Person     	Comments
+-- 1.0	 19.05.2018		VKR			Explication sur la structure
+-- 2.0	 04.06.2018		JMI			Finalisation
 ------------------------------------------------------------------------------*/
 `ifndef INTERFACES_SV
 `define INTERFACES_SV
 
 `include "constant.sv"
 
-///< VKR exp: création de deux interfaces pour la connection des entrées/sorties du DUT
-///< VKR exp: possible de travailler comme un bus (plusieurs modules connectés)
+// Création des interfaces pour la connection des entrées/sorties du DUT
+// Possible de travailler comme un bus (plusieurs modules connectés)
 interface ble_itf;
-    logic clk_i = 0;
+	logic clk_i = 0;
     logic rst_i;
     logic serial_i;
     logic valid_i;
