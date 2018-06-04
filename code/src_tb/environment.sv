@@ -5,7 +5,7 @@
 -- Cours VSN
 --------------------------------------------------------------------------------
 --
--- File			: environment.sv
+-- File		: environment.sv
 -- Authors	: --
 --
 -- Date     : --
@@ -17,8 +17,9 @@
 --
 --------------------------------------------------------------------------------
 -- Modifications :
--- Ver   Date        	Person     			Comments
--- 1.0	 19.05.2018		VKR							Explication sur la structure
+-- Ver   Date        	Person     	Comments
+-- 1.0	 19.05.2018		VKR			Explication sur la structure
+-- 2.0	 04.06.2018		JMI			Finalisation
 ------------------------------------------------------------------------------*/
 `ifndef ENVIRONMENT_SV
 `define ENVIRONMENT_SV
@@ -27,103 +28,98 @@
 
 class Environment;
 
-    int testcase;
+	int testcase;
 
-		///< VKR exp: déclaration des différents objets
+	// Déclaration des différents objets
     Sequencer sequencer;
     Driver driver;
     Monitor monitor;
     Scoreboard scoreboard;
-		Watchdog watchdog;
+	Watchdog watchdog;
 
-		///< VKR exp: les interfaces sont en virtual pour que tous les objets puissent y accéder (voir comme un bus)
+	// Les interfaces sont en virtual pour que tous les objets puissent y accéder (voir comme un bus)
     virtual ble_itf input_itf;
     virtual usb_itf output_itf;
 
-		///< Pour le isRunning du watchdog et du scoreboard
-		virtual run_itf wd_sb_itf;
+	// Pour le isRunning du watchdog et du scoreboard
+	virtual run_itf wd_sb_itf;
 
-		///< VKR exp: variable pour les différentes fifo (mailbox de TRANSACTIONS_SV)
+	// Variable pour les différentes fifo (mailbox de TRANSACTIONS_SV)
     ble_fifo_t sequencer_to_driver_fifo;
     ble_fifo_t sequencer_to_scoreboard_fifo;
     usb_fifo_t monitor_to_scoreboard_fifo;
 
-		///< VKR exp: tâche appellée depuis le scoreboard
+	/*---------
+	-- build --
+	---------*/
+	// Tâche appellée depuis le scoreboard
     task build;
-		///< VKR exp: instanciation des fifo avec une taille max (bound)
-		///< VKR exp: quand c'est plein, c'est suspendu est mis dès qu'il y a de la place)
+	// Instanciation des fifo avec une taille max (bound)
+	// Quand c'est plein, c'est suspendu est mis dès qu'il y a de la place
     sequencer_to_driver_fifo     = new(10);
     sequencer_to_scoreboard_fifo = new(10);
     monitor_to_scoreboard_fifo   = new(100);
 
-		///< VKR exp: instanciation des différents objets de la structure de test
+	// Instanciation des différents objets de la structure de test
     sequencer = new;
     driver = new;
     monitor = new;
     scoreboard = new;
-		watchdog = new;
+	watchdog = new;
 
-		///< VKR exp: passage du paramètre testcase à tous les objets
+	// Passage du paramètre testcase au sequencer
     sequencer.testcase = testcase;
-    driver.testcase = testcase;
-    monitor.testcase = testcase;
-    scoreboard.testcase = testcase;
 
-		///< VKR exp: passage des interfaces d'entrée et de sortie
-		///< VKR exp: c'est le moyen de communicationa avec le DUT
+	// Passage des interfaces d'entrée et de sortie
+	// C'est le moyen de communicationa avec le DUT
     driver.vif = input_itf;
-
-		sequencer.vif = input_itf;
-
+	sequencer.vif = input_itf;
     monitor.vif = output_itf;
+	scoreboard.vif = output_itf;
+	watchdog.vif = input_itf;
+	watchdog.wd_sb_itf = wd_sb_itf;
+	scoreboard.wd_sb_itf = wd_sb_itf;
 
-		scoreboard.vif = output_itf;
-
-		watchdog.vif = input_itf;
-
-		watchdog.wd_sb_itf = wd_sb_itf;
-		scoreboard.wd_sb_itf = wd_sb_itf;
-
-		///< VKR exp: passage de la fifo entre le sequencer et le driver
+	// Passage de la fifo entre le sequencer et le driver
     sequencer.sequencer_to_driver_fifo = sequencer_to_driver_fifo;
     driver.sequencer_to_driver_fifo = sequencer_to_driver_fifo;
 
-		///< VKR exp: passage de la fifo entre le sequencer et le scoreboard
+	// Passage de la fifo entre le sequencer et le scoreboard
     sequencer.sequencer_to_scoreboard_fifo = sequencer_to_scoreboard_fifo;
     scoreboard.sequencer_to_scoreboard_fifo = sequencer_to_scoreboard_fifo;
 
-		///< VKR exp: passage de la fifo entre le monitor et le scoreboard
+	// Passage de la fifo entre le monitor et le scoreboard
     monitor.monitor_to_scoreboard_fifo = monitor_to_scoreboard_fifo;
     scoreboard.monitor_to_scoreboard_fifo = monitor_to_scoreboard_fifo;
 
     endtask : build
 
-		///< VKR exp: tâche appellée depuis le scoreboard
+	/*-------
+	-- run --
+	-------*/
+	// Tâche appellée depuis le scoreboard
     task run;
-				///< VKR exp: lancement en parrallèle de tous les objets de la structure de test
-        fork
+		// Lancement en parrallèle de tous les objets de la structure de test
+    	fork
             sequencer.run();
-            driver.run();				// Pas forcéement besoin du watchdog (c'est le scoreboard qui arrête)
-            monitor.run();			// Pas forcéement besoin du watchdog (c'est le scoreboard qui arrête)
+            driver.run();		// Pas forcéement besoin du watchdog (c'est le scoreboard qui arrête)
+            monitor.run();		// Pas forcéement besoin du watchdog (c'est le scoreboard qui arrête)
             scoreboard.run();
-						watchdog.run(sequencer, driver, monitor, scoreboard);
-        join;												///< VKR exp: attente de fin de TOUTES les tâches
+			watchdog.run(sequencer, driver, monitor, scoreboard);
+        join;					// Attente de fin de TOUTES les tâches
 
-				// Displaying the simulation printStatus
-				$display("\n\n");
-				$display("-------------- Displaying the simulation status ---------------\n\n");
-				sequencer.printStatus();
-				$display("\n");
-				driver.printStatus();
-				$display("\n");
-				monitor.printStatus();
-				$display("\n");
-				scoreboard.printStatus();
-				$display("\n\n");
-
-	  endtask : run
-
+		// Displaying the simulation printStatus
+		$display("\n\n");
+		$display("-------------- Displaying the simulation status ---------------\n\n");
+		sequencer.printStatus();
+		$display("\n");
+		driver.printStatus();
+		$display("\n");
+		monitor.printStatus();
+		$display("\n");
+		scoreboard.printStatus();
+		$display("\n\n");
+	endtask : run
 endclass : Environment
-
 
 `endif // ENVIRONMENT_SV
