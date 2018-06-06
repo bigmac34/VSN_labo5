@@ -53,11 +53,3 @@ vsim -c -do "do ../scripts/sim.do all 6 2"
 vsim -c -do "do ../scripts/sim.do all 6 3"
 vsim -c -do "do ../scripts/sim.do all 6 4"
 vsim -c -do "do ../scripts/sim.do all 6 5"
-
-# Errno : 7
-vsim -c -do "do ../scripts/sim.do all 7 0"
-vsim -c -do "do ../scripts/sim.do all 7 1"
-vsim -c -do "do ../scripts/sim.do all 7 2"
-vsim -c -do "do ../scripts/sim.do all 7 3"
-vsim -c -do "do ../scripts/sim.do all 7 4"
-vsim -c -do "do ../scripts/sim.do all 7 5"
