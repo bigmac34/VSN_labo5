@@ -80,13 +80,13 @@ class BlePacket;
 		};
 	}
 
-	// Les paquet ont la taille minimale
+	// Les paquets ont la taille minimale
 	constraint size_range_tc1 {
 		(testcase == 1) && (isAdv == 1) -> size inside {[4:4]};
-		(testcase == 1) && (isAdv == 0) -> size inside {[1:1]};
+		(testcase == 1) && (isAdv == 0) -> size inside {[0:0]};
 	}
 
-	// Les paquet ont la taille minimale
+	// Les paquets ont la taille maximale
 	constraint size_range_tc2 {
 	    (testcase == 2) && (isAdv == 1) -> size inside {[15:15]};
 	    (testcase == 2) && (isAdv == 0) -> size inside {[63:63]};
