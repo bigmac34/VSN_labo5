@@ -33,17 +33,18 @@ interface ble_itf;
     logic rst_i;
     logic serial_i;
     logic valid_i;
-    logic[`TAILLE_CHANNEL-1:0] channel_i;
-    logic[`TAILLE_RSSI-1:0] rssi_i;
+    logic[`CHANNEL_FIELD_SIZE-1:0] channel_i;
+    logic[`RSSI_FIELD_SIZE-1:0] rssi_i;
 endinterface : ble_itf
 
 interface usb_itf;
     logic clk_i;
-    logic[`TAILLE_DATA_O-1:0] data_o;
+    logic[`DATA_O_SIZE-1:0] data_o;
     logic valid_o;
 	logic frame_o;
 endinterface : usb_itf
 
+// Interface de communication entre le Watchdog et le Scoreboard.
 interface run_itf;
     logic isRunning = 1;
 endinterface : run_itf

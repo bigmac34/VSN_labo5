@@ -25,38 +25,38 @@
 `ifndef CONSTANT_SV
 `define CONSTANT_SV
 
-`define TAILLE_PREAMBULE	8		// bits
-`define TAILLE_ADRESSE		32		// bits
-`define TAILLE_ENTETE		16		// bits
-`define TAILLE_DEVICE_ADDR	32		// bits
-`define TAILLE_MAX_DATA		(63*8)	// bits
-`define TAILLE_SIZE_BLE		6		// bits
-`define TAILLE_RSSI			8		// bits
+`define PREAMBLE_FIELD_SIZE         8		// bits
+`define ADDRESS_FIELD_SIZE		    32		// bits
+`define HEADER_FIELD_SIZE           16		// bits
+`define NB_MAX_DATA                 (63*8)	// bits (2^6 - 1)
+`define NB_MAX_ADVERTISING_DATA		15	// 2⁴-1 bytes
+`define BLE_SIZE_FIELD_SIZE         6		// bits
+`define RSSI_FIELD_SIZE             8		// bits
 
-`define TAILLE_SIZE_USB		8		// bits
-`define TAILLE_CHANNEL		7		// bits
-`define TAILLE_RESERVED		8		// bits
+`define USB_FIELD_SIZE              8		// bits
+`define CHANNEL_FIELD_SIZE          7		// bits
+`define RESERVED_FIELD_SIZE         8		// bits
 
-`define TAILLE_MAX_DATA_ADVERTISING		15	// 2⁴-1 bytes
 
-`define OCTET				8		// bits
-`define NB_OCTET_AVANT_DATA	10		// bytes
 
-`define NB_FREQ	79					// Nombre de canaux Bluetooth
+`define OCTET                       8		// bits
+`define OCTECT_BEFORE_USB_DATA      10		// bytes
 
-`define PREAMBULE			8'b01010101		// Valeur du préambule des trames BLE
-`define FAUX_PREAMBULE		8'b00110011		// Valeur incorrect du préambule
-`define ADDRESS_ADVERTISING	32'h12345678	// Adresse pour les trames d'advertising
-`define ADDRESS_TEST		32'h1234ABCD	// Adresse quelconque d'un module BLE
+`define NB_FREQ	                    79				// Nombre de canaux Bluetooth
 
-`define NB_MAX_ADRESSE		16		// Nombre maximum d'adresse que le DUT peut stocker
+`define PREAMBLE                    8'b01010101		// Valeur du préambule des trames BLE
+`define BAD_PREAMBLE                8'b00110011		// Valeur incorrecte du préambule
+`define ADVERTISING_ADDRESS	        32'h12345678	// Adresse pour les trames d'advertising
+`define TEST_ADDRESS                32'h1234ABCD	// Adresse quelconque d'un module BLE
 
-`define NB_MAX_PAQUET_SEND	40		// Taille de tableaux de paquets BLE du scoreboard
+`define NB_MAX_ADDRESS              16		// Nombre maximum d'adresses que le DUT peut stocker
 
-`define TAILLE_DATA_O		8		// bits
+`define NB_MAX_BLE_PAQUET           40		// Taille du tableaux de paquets BLE du scoreboard
 
-`define TIME_WATCHDOG		25000	// Temps pour la gestion du watchdog
+`define DATA_O_SIZE                 8		// bits
 
-typedef logic[`TAILLE_ADRESSE-1:0] address_t;	// Definition du type address_t
+`define WATCHDOG_TIME               25000	// Temps pour la gestion du watchdog (500 us)
+
+typedef logic[`ADDRESS_FIELD_SIZE-1:0] address_t;	// Definition du type address_t
 
 `endif // CONSTANT_SV
