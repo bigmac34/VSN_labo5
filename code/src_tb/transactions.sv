@@ -33,10 +33,10 @@
 ******************************************************************************/
 class BlePacket;
 
-	logic[(`TAILLE_MAX_DATA+`TAILLE_ENTETE+`TAILLE_ADRESSE+`TAILLE_PREAMBULE):0] dataToSend;
+	logic[(`NB_MAX_DATA+`HEADER_FIELD_SIZE+`ADDRESS_FIELD_SIZE+`PREAMBLE_FIELD_SIZE):0] dataToSend;
  	int sizeToSend;
 
-	// Pour la gestion de l'envoi bit par bit. Savoir quel données on été envoyé
+	// Pour la gestion de l'envoi bit par bit. Savoir quelles données ont été envoyées
 	int position = 0;
 	logic valid = 0;
 
@@ -47,32 +47,31 @@ class BlePacket;
 
   	logic isAdv;
   	logic dataValid = 1;
-	logic[`TAILLE_ADRESSE-1:0] addr; // L'adresse est evoyée par le séquencer
-	logic[`TAILLE_MAX_DATA-1:0] data;
-	logic[`TAILLE_PREAMBULE-1:0] preamble;
+	logic[`ADDRESS_FIELD_SIZE-1:0] addr; // L'adresse est evoyée par le sequencer
+	logic[`NB_MAX_DATA-1:0] data;
+	logic[`PREAMBLE_FIELD_SIZE-1:0] preamble;
 
-	// Champs generes aleatoirement
-	// Avec le rand c'est ce qui va être randomisé à l'appel de .randomize() sur la classe
-	rand logic[`TAILLE_ENTETE-1:0] header;
-	rand logic[`TAILLE_MAX_DATA-1:0] rawData;
-	rand logic[`TAILLE_SIZE_BLE-1:0] size;
-	rand logic[`TAILLE_RSSI-1:0] rssi;
+	// Champs générés aléatoirement
+	rand logic[`HEADER_FIELD_SIZE-1:0] header;
+	rand logic[`NB_MAX_DATA-1:0] rawData;
+	rand logic[`BLE_SIZE_FIELD_SIZE-1:0] size;
+	rand logic[`RSSI_FIELD_SIZE-1:0] rssi;
 
-	// Envoie de paquets valides
-	// Contrainte sur la taille des donnees en fonction du type de paquet
+	// Envoi de paquets valides
+	// Contrainte sur la taille des données en fonction du type de paquet
 	constraint size_range_tc0 {
 		(testcase != 1) && (testcase != 2) && (isAdv == 1) -> size inside {[4:15]};
 		(testcase != 1) && (testcase != 2) && (isAdv == 0) -> size inside {[0:63]};
 	}
 
 	constraint size_dist_tc0 {
-		// Contraite sur la taille des données quand c'est un advertising
+		// Contrainte sur la taille des données quand c'est un advertising
 		(testcase != 1) && (testcase != 2) && (isAdv == 1) -> size dist {
 			[4:6] 	:/ 1,
 			[7:12]	:/ 1,
 			[13:15]	:/ 1
 		};
-		// Contraite sur la taille des données quand c'est paquet de donness
+		// Contrainte sur la taille des données quand c'est un paquet de données
 		(testcase != 1) && (testcase != 2) && (isAdv == 0) -> size dist {
 			[1:4] 	:/ 1,
 			[5:58]	:/ 1,
@@ -80,13 +79,13 @@ class BlePacket;
 		};
 	}
 
-	// Les paquet ont la taille minimale
+	// Les paquets ont la taille minimale
 	constraint size_range_tc1 {
 		(testcase == 1) && (isAdv == 1) -> size inside {[4:4]};
 		(testcase == 1) && (isAdv == 0) -> size inside {[1:1]};
 	}
 
-	// Les paquet ont la taille minimale
+	// Les paquets ont la taille maximale
 	constraint size_range_tc2 {
 	    (testcase == 2) && (isAdv == 1) -> size inside {[15:15]};
 	    (testcase == 2) && (isAdv == 0) -> size inside {[63:63]};
@@ -105,11 +104,11 @@ class BlePacket;
 	/*----------------
 	-- getDeviceAdd --
 	----------------*/
-	// Retourne l'adresse du paquet Ble
+	// Retourne l'adresse du paquet Ble dans le cas d'un advertising
 	function address_t getDeviceAdd();
 		address_t address;
-		for(int i=0; i<`TAILLE_ADRESSE;i++)
-			address[i] = rawData[size*8-`TAILLE_ADRESSE+i];
+		for(int i=0; i<`ADDRESS_FIELD_SIZE;i++)
+			address[i] = rawData[size*8-`ADDRESS_FIELD_SIZE+i];
 		$display("The device address in the advertising is %0h \n", address);
 		return address;
 	endfunction : getDeviceAdd
@@ -122,42 +121,42 @@ class BlePacket;
 	// En l'occurence construction d'un paquet
  	function void post_randomize();
 
-		// Preambule correct (01010101)
+		// Préambule correct (01010101)
 		if (testcase != 4) begin
-			preamble=`PREAMBULE;
+			preamble=`PREAMBLE;
 		end
-		// Preambule incorrect (testcase 4)
+		// Préambule incorrect (testcase 4)
 		else begin
-			preamble=`FAUX_PREAMBULE;
+			preamble=`BAD_PREAMBLE;
 		end
 
 		// Initialisation des données à envoyer
 	  	dataToSend = 0;
-	  	sizeToSend=size*8+`TAILLE_ENTETE+`TAILLE_ADRESSE+`TAILLE_PREAMBULE;
+	  	sizeToSend=size*8+`HEADER_FIELD_SIZE+`ADDRESS_FIELD_SIZE+`PREAMBLE_FIELD_SIZE;
 
-		// Cas de l'envoi d'un paquet d'advertizing
+		// Cas de l'envoi d'un paquet d'advertising
 		if (isAdv == 1) begin
-			// Ecrit l'adresse à du device à enregistrer
-	        for(int i=0; i<`TAILLE_ADRESSE;i++)
-	            rawData[size*8-`TAILLE_ADRESSE+i] = addr[i];
+			// Ecrit l'adresse du device à enregistrer
+	        for(int i=0; i<`ADDRESS_FIELD_SIZE;i++)
+	            rawData[size*8-`ADDRESS_FIELD_SIZE+i] = addr[i];
 			// L'adresse du paquet est un advertising
-			addr = `ADDRESS_ADVERTISING;
+			addr = `ADVERTISING_ADDRESS;
 		end
 
 
-		// Réaction des données à envoyer
-		for(int i=0;i<`TAILLE_PREAMBULE;i++)								// Ecrit le préambule
-			dataToSend[sizeToSend-`TAILLE_PREAMBULE+i]=preamble[i];
-		for(int i=0;i<`TAILLE_ADRESSE;i++)									// Ecrit l'adresse
-			dataToSend[sizeToSend-`TAILLE_PREAMBULE-`TAILLE_ADRESSE+i]=addr[i];
+		// Ecriture des données à envoyer
+		for(int i=0;i<`PREAMBLE_FIELD_SIZE;i++)								// Ecrit le préambule
+			dataToSend[sizeToSend-`PREAMBLE_FIELD_SIZE+i]=preamble[i];
+		for(int i=0;i<`ADDRESS_FIELD_SIZE;i++)									// Ecrit l'adresse
+			dataToSend[sizeToSend-`PREAMBLE_FIELD_SIZE-`ADDRESS_FIELD_SIZE+i]=addr[i];
 		//$display("Sending packet with address %h\n",addr);
-		for(int i=0;i<`TAILLE_ENTETE;i++)									// Ecrit l'entête
-			dataToSend[sizeToSend-`TAILLE_PREAMBULE-`TAILLE_ADRESSE-`TAILLE_ENTETE+i]=0; // Reset le header
-		for(int i=0;i<`TAILLE_SIZE_BLE;i++)									// Ecrit la taille
-			dataToSend[sizeToSend-`TAILLE_PREAMBULE-`TAILLE_ADRESSE-`TAILLE_ENTETE+i]=size[i];
+		for(int i=0;i<`HEADER_FIELD_SIZE;i++)									// Ecrit l'entête
+			dataToSend[sizeToSend-`PREAMBLE_FIELD_SIZE-`ADDRESS_FIELD_SIZE-`HEADER_FIELD_SIZE+i]=0; // Reset le header
+		for(int i=0;i<`BLE_SIZE_FIELD_SIZE;i++)									// Ecrit la taille
+			dataToSend[sizeToSend-`PREAMBLE_FIELD_SIZE-`ADDRESS_FIELD_SIZE-`HEADER_FIELD_SIZE+i]=size[i];
 		data = 0;
 		for(int i=0;i<size*8;i++) begin										// Ecrit les données
-			dataToSend[sizeToSend-`TAILLE_PREAMBULE-`TAILLE_ADRESSE-`TAILLE_ENTETE-1-i]=rawData[size*8-1-i];
+			dataToSend[sizeToSend-`PREAMBLE_FIELD_SIZE-`ADDRESS_FIELD_SIZE-`HEADER_FIELD_SIZE-1-i]=rawData[size*8-1-i];
 			data[size*8-1-i] = rawData[size*8-1-i];
 		end
  	endfunction : post_randomize
@@ -165,7 +164,7 @@ class BlePacket;
 	/*--------
 	-- copy --
 	--------*/
-	// Copie profonde
+	// Copie profonde de l'objet
 	function BlePacket copy();
 		BlePacket theCopy = new();
 		theCopy.dataToSend = this.dataToSend;
@@ -193,38 +192,37 @@ endclass : BlePacket
 ******************************************************************************/
 class AnalyzerUsbPacket;
 	// Variable modifiée au niveau du monitor
-	logic[(64*8+10*8)-1:0] dataToSend;		// pas plus de 64 byte de données
+	logic[(64*8+10*8)-1:0] dataToSend;		// pas plus de 64 bytes de données
 
 	// Les champs d'un packet USB
-	logic[`TAILLE_SIZE_USB-1:0] size;
-	logic[`TAILLE_RSSI-1:0] rssi;
-	logic[`TAILLE_CHANNEL-1:0] channel;
+	logic[`USB_FIELD_SIZE-1:0] size;
+	logic[`RSSI_FIELD_SIZE-1:0] rssi;
+	logic[`CHANNEL_FIELD_SIZE-1:0] channel;
 	logic isAdv;
-	logic[`TAILLE_ADRESSE-1:0] address;
-	logic[`TAILLE_ENTETE-1:0] header;
-	logic[(`TAILLE_MAX_DATA-1):0] data;
+	logic[`ADDRESS_FIELD_SIZE-1:0] address;
+	logic[`HEADER_FIELD_SIZE-1:0] header;
+	logic[(`NB_MAX_DATA-1):0] data;
 
 	/*-------------
 	-- getFields --
 	-------------*/
-	// Permet de setter les champs une fois qu'un packet usb est reçu en entier
+	// Permet de setter les champs une fois qu'un packet usb avant de l'envoyer
 	function void getFields();
-		for(int i = 0; i < `TAILLE_SIZE_USB; i++)			// Récupération de la taille
+		for(int i = 0; i < `USB_FIELD_SIZE; i++)			// Récupération de la taille
 			size[i] = dataToSend[i];
-		for(int i = 0; i < `TAILLE_RSSI; i++)				// Récupération du RSSI
-			rssi[i] = dataToSend[`TAILLE_SIZE_USB+i];
-		isAdv = dataToSend[`TAILLE_SIZE_USB+`TAILLE_RSSI];	// Récupération du flag
-		for(int i = 0; i < `TAILLE_CHANNEL; i++)			// Récupération du canal
-			channel[i] = dataToSend[`TAILLE_SIZE_USB+`TAILLE_RSSI+1+i];
-															// Zone reservée de 1 octet
-		for(int i = 0; i < `TAILLE_ADRESSE; i++)			// Récupération de l'adresse
-			address[i] = dataToSend[`TAILLE_SIZE_USB+`TAILLE_RSSI+`TAILLE_CHANNEL+1+`TAILLE_RESERVED+i];
-		for(int i = 0; i < `TAILLE_ENTETE; i++)				// Récupération de l'entête
-			header[i] = dataToSend[`TAILLE_SIZE_USB+`TAILLE_RSSI+`TAILLE_CHANNEL+1+`TAILLE_RESERVED+`TAILLE_ADRESSE+i];
+		for(int i = 0; i < `RSSI_FIELD_SIZE; i++)				// Récupération du RSSI
+			rssi[i] = dataToSend[`USB_FIELD_SIZE+i];
+		isAdv = dataToSend[`USB_FIELD_SIZE+`RSSI_FIELD_SIZE];	// Récupération du flag
+		for(int i = 0; i < `CHANNEL_FIELD_SIZE; i++)			// Récupération du canal
+			channel[i] = dataToSend[`USB_FIELD_SIZE+`RSSI_FIELD_SIZE+1+i]; // Zone reservée de 1 octet
+		for(int i = 0; i < `ADDRESS_FIELD_SIZE; i++)			// Récupération de l'adresse
+			address[i] = dataToSend[`USB_FIELD_SIZE+`RSSI_FIELD_SIZE+`CHANNEL_FIELD_SIZE+1+`RESERVED_FIELD_SIZE+i];
+		for(int i = 0; i < `HEADER_FIELD_SIZE; i++)				// Récupération de l'entête
+			header[i] = dataToSend[`USB_FIELD_SIZE+`RSSI_FIELD_SIZE+`CHANNEL_FIELD_SIZE+1+`RESERVED_FIELD_SIZE+`ADDRESS_FIELD_SIZE+i];
 		data = 0;											// Pour effacer où on va pas écrire
-		for(int i = 0; i < (size-`NB_OCTET_AVANT_DATA); i++)// Récupération des datas
+		for(int i = 0; i < (size-`OCTECT_BEFORE_USB_DATA); i++)// Récupération des datas
 			for(int y = 0; y < `OCTET; y++)
-				data[(size-`NB_OCTET_AVANT_DATA-1-i)*`OCTET+y] = dataToSend[`NB_OCTET_AVANT_DATA*`OCTET+i*`OCTET+y];
+				data[(size-`OCTECT_BEFORE_USB_DATA-1-i)*`OCTET+y] = dataToSend[`OCTECT_BEFORE_USB_DATA*`OCTET+i*`OCTET+y];
 
 	endfunction
 

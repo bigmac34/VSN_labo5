@@ -37,14 +37,14 @@ class Environment;
     Scoreboard scoreboard;
 	Watchdog watchdog;
 
-	// Les interfaces sont en virtual pour que tous les objets puissent y accéder (voir comme un bus)
+	// Les interfaces sont en virtual pour que tous les objets puissent y accéder (comme un bus)
     virtual ble_itf input_itf;
     virtual usb_itf output_itf;
 
-	// Pour le isRunning du watchdog et du scoreboard
+	// Interface entre le watchdog et le scoreboard
 	virtual run_itf wd_sb_itf;
 
-	// Variable pour les différentes fifo (mailbox de TRANSACTIONS_SV)
+	// Variables pour les différentes fifo (mailbox de TRANSACTIONS_SV)
     ble_fifo_t sequencer_to_driver_fifo;
     ble_fifo_t sequencer_to_scoreboard_fifo;
     usb_fifo_t monitor_to_scoreboard_fifo;
@@ -52,9 +52,9 @@ class Environment;
 	/*---------
 	-- build --
 	---------*/
-	// Tâche appellée depuis le scoreboard
+	// Tâche appellée depuis le testbench
     task build;
-	// Instanciation des fifo avec une taille max (bound)
+	// Instanciation des fifos avec une taille max (bound)
 	// Quand c'est plein, c'est suspendu est mis dès qu'il y a de la place
     sequencer_to_driver_fifo     = new(10);
     sequencer_to_scoreboard_fifo = new(10);
@@ -97,18 +97,18 @@ class Environment;
 	/*-------
 	-- run --
 	-------*/
-	// Tâche appellée depuis le scoreboard
+	// Tâche appellée depuis le testbench
     task run;
 		// Lancement en parrallèle de tous les objets de la structure de test
     	fork
             sequencer.run();
-            driver.run();		// Pas forcéement besoin du watchdog (c'est le scoreboard qui arrête)
-            monitor.run();		// Pas forcéement besoin du watchdog (c'est le scoreboard qui arrête)
+            driver.run();
+            monitor.run();
             scoreboard.run();
 			watchdog.run(sequencer, driver, monitor, scoreboard);
         join;					// Attente de fin de TOUTES les tâches
 
-		// Displaying the simulation printStatus
+		// Affichage des statuts de simulation
 		$display("\n\n");
 		$display("-------------- Displaying the simulation status ---------------\n\n");
 		sequencer.printStatus();

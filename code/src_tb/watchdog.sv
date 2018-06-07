@@ -28,7 +28,7 @@
 `include "constant.sv"
 
 class Watchdog;
-	// Les interfaces sont en virtual pour que tous les objets puissent y accéder (voir comme un bus)
+	// Les interfaces sont en virtual pour que tous les objets puissent y accéder
 	virtual ble_itf vif;
 	virtual run_itf wd_sb_itf;
 
@@ -36,24 +36,24 @@ class Watchdog;
 	task run(Sequencer sequencer, Driver driver, Monitor monitor, Scoreboard scoreboard);
 		int i = 0;
 		$display("Watchdog : start");
-		// Faire un certain nombre de fois avant d'arrêter le test
-		while(i < `TIME_WATCHDOG) begin
-			// Si aucune activité détectée
+		// Vérifier si le temps d'inactivité dépasse le max défini
+		while(i < `WATCHDOG_TIME) begin
+			// Si aucune activité n'est détectée
 			if(wd_sb_itf.isRunning == 0) begin
-				i++;
+				i++;					// Incrémentation du compteur
 			end
-			// Si activité détectée
+			// Si une activité est détectée
 			else begin
 				i = 0;					// Remet le compteur à 0
 			end
 			wd_sb_itf.isRunning = 0;	// Flag d'activité remis à 0
 
-			// Pour que la tache ne l'écrivent pas en même temps
+			// Attente de 2 coups de clock avant la prochaine vérification
 			@(posedge vif.clk_i);
 			@(posedge vif.clk_i);
 		end
 
-		// Disable all the running task
+		// Désactivation des tâches actives
 		$display("\n");
 		driver.watchdogDisable();
 		monitor.watchdogDisable();
