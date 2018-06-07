@@ -82,7 +82,7 @@ class BlePacket;
 	// Les paquets ont la taille minimale
 	constraint size_range_tc1 {
 		(testcase == 1) && (isAdv == 1) -> size inside {[4:4]};
-		(testcase == 1) && (isAdv == 0) -> size inside {[1:1]};
+		(testcase == 1) && (isAdv == 0) -> size inside {[0:0]};
 	}
 
 	// Les paquets ont la taille maximale

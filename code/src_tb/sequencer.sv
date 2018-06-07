@@ -116,7 +116,7 @@ class Sequencer;
 				nbPaquetSend++;
 			end
 
-			// Envoi de paquets de données random encore 9 fois (10 au total)
+			// Envoie de packets de données random encore 9 fois
 	        for(int i=0;i<nbData;i++) begin
 				sendBlePacket(testcase, 0, `TEST_ADDRESS, nbPaquetSend); // Envoie du paquet
 				nbPaquetSend++;
